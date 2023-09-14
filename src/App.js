@@ -1,7 +1,13 @@
 import logo from './logo.svg';
 import './App.css';
+import {useState} from "react";
 
 function App() {
+  const initializeCells = () => new Array()
+
+  const [message, setMessage] = useState('Welcome to Pentago!');
+  const [cells, setCells] = useState()
+
   return (
     <div className="App">
       <header className="App-header">
