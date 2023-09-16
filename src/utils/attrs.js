@@ -35,7 +35,6 @@ const cellAttrs =  {
 };
 
 const quadAttrs = {
-    cells: [],
     columns: 3,
     width: 250,
     height: 250,
@@ -44,8 +43,7 @@ const quadAttrs = {
     justifyContent: 'center',
     backgroundColor: '#784115',
     color: '#6d1016',
-    borderColor: '#784115',
-    cellAttrs: cellAttrs
+    borderColor: '#784115'
 };
 
 const boardAttrs =  {

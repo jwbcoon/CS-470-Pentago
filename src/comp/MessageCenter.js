@@ -12,4 +12,4 @@ const MessageCenter = props => {
     )
 };
 
-export {MessageCenter};
+export { MessageCenter };
