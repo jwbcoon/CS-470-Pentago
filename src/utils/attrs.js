@@ -1,4 +1,3 @@
-import {green, grey, lightBlue, orange} from '@mui/material/colors'
 
 const arrayDims = {
     x: 6,
@@ -7,24 +6,24 @@ const arrayDims = {
 
 const cellStyleVariants = {
     empty: {
-        backgroundColor: grey[500],
-            color: grey[50],
-            borderColor: grey[500]
+        backgroundColor: '#757575',
+            color: '#fafafa',
+            borderColor: '#757575'
     },
     firstPl: {
-        backgroundColor: lightBlue[200],
-            color: grey[50],
-            borderColor: lightBlue[200]
+        backgroundColor: '#81d4fa',
+            color: '#fafafa',
+            borderColor: '#81d4fa'
     },
     secondPl: {
-        backgroundColor: orange[200],
-            color: grey[50],
-            borderColor: orange[200]
+        backgroundColor: '#ffcc80',
+            color: '#fafafa',
+            borderColor: '#ffcc80'
     },
     win: {
-        backgroundColor: green[400],
-            color: grey[50],
-            borderColor: green[400]
+        backgroundColor: '#3bc270',
+            color: '#fafafa',
+            borderColor: '#3bc270'
     }
 }
 

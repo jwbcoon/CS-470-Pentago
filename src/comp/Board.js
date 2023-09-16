@@ -1,20 +1,25 @@
-import {Box, Grid} from "@mui/material";
-import {Fragment} from "react";
+import {Box, Container, Grid} from "@mui/material";
+import {forwardRef, Fragment} from "react";
 
-function cellsToQuadFormat(cells, quadAttrs, rowLength) { //returns an array of 4 3x3 cell quads
-    const cellSlicer = (cells, nwest, neast, cellsWidth) => [ //slices 3x3 quads of cells
-        ...cells.slice(nwest, neast + 1),
-        ...cells.slice(nwest + cellsWidth, neast + cellsWidth + 1),
-        ...cells.slice(nwest + 2 * cellsWidth, neast + 2 * cellsWidth + 1)
-    ];
-    return [
-        cellSlicer(cells, 0, quadAttrs.columns - 1, rowLength), //northwest section
-        cellSlicer(cells, quadAttrs.columns, rowLength - 1, rowLength), //northeast section
-        cellSlicer(cells, quadAttrs.columns * rowLength, quadAttrs.columns * rowLength + quadAttrs.columns - 1, rowLength), //southwest section
-        cellSlicer(cells, rowLength * quadAttrs.columns + quadAttrs.columns, quadAttrs.columns * rowLength + rowLength - 1, rowLength) //southeast section
-    ]
-}
 
+const KeyboardInput = forwardRef((props, ref) => {
+
+    const {onKeyDownHandler, onBlurHandler} = props;
+
+    return (
+        <input
+            autoFocus={true}
+            style={{
+                position: 'absolute',
+                top: '-9999px',
+                left: '-9999px',
+            }}
+            onKeyDown={event => onKeyDownHandler(event)}
+            onBlur={event => onBlurHandler(event)}
+            ref={ref}
+        />
+    );
+});
 
 const Quad = props => {
     const {attrs, cells, onClickQuadHandler, onClickCellHandler} = props;
@@ -22,7 +27,7 @@ const Quad = props => {
     return (
         <Fragment>
             <Grid container
-                  onClick={() => onClickQuadHandler()}
+                  onClick={() => onClickQuadHandler(cells, cells[0].qid)}
                   sx={{ ...attrs.quadAttrs }}
             >
                 {
@@ -34,8 +39,8 @@ const Quad = props => {
                                   p: 2
                               }}
                         >
-                            <Box sx={{ ...attrs.cellAttrs, ...attrs.cellAttrs.style }}
-                                 onClick={() => onClickCellHandler(cell.cid, cell.quad, idx)}/>
+                            <Box sx={{ ...cell, ...cell.style }}
+                                 onClick={() => onClickCellHandler(cell.cid, cell.qid, idx)}/>
                         </Grid>
                     )
                 }
@@ -46,13 +51,14 @@ const Quad = props => {
 
 
 const Board = props => {
-    const {cells, quads, attrs, onClickQuadHandler, onClickCellHandler} = props;
-    cellsToQuadFormat(cells, attrs.quadAttrs, attrs.boardAttrs.columns * attrs.quadAttrs.columns)
-        .forEach((cellSlice, idx) => quads[idx] = cellSlice);
+    const {attrs, quads, selectors,
+          onClickQuadHandler, onClickCellHandler,
+          onKeyDownHandler, onBlurHandler, inputRef} = props;
 
     // noinspection JSValidateTypes
     return (
-        <Fragment>
+        <Container>
+            <KeyboardInput onKeyDownHandler={onKeyDownHandler} onBlurHandler={onBlurHandler} ref={inputRef}/>
             <Grid container
                   columns={attrs.boardAttrs.columns}
                   sx={{ ...attrs.boardAttrs }}
@@ -66,16 +72,19 @@ const Board = props => {
                                       p: 1
                                   }}
                             >
-                                <Quad attrs={attrs}
-                                      cells={quadCells}
-                                      onClickQuadHandler={onClickQuadHandler}
-                                      onClickCellHandler={onClickCellHandler}/>
+                                <Container sx={{ backgroundColor: selectors[idx].backgroundColor,
+                                                 padding: 1 }}>
+                                    <Quad attrs={attrs}
+                                          cells={quadCells}
+                                          onClickQuadHandler={onClickQuadHandler}
+                                          onClickCellHandler={onClickCellHandler}/>
+                                </Container>
                             </Grid>
                         )
                     )
                 }
             </Grid>
-        </Fragment>
+        </Container>
     );
 }
 
