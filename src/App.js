@@ -7,8 +7,33 @@ import {MessageCenter} from "./comp/MessageCenter";
 
 function App() {
 
+    const rotateQuad = (quadCells, clockwise) => {
+        const newCells = cells.slice();
+        if (clockwise) {
+            console.log(`Rotating quad ${quadCells[0].qid} clockwise`);
+            const coordinates = quadCells.map((cell, idx) => ({
+                startX: idx % attributes.quadAttrs.columns - 1,
+                startY: Math.floor(idx / attributes.quadAttrs.columns),
+                endX: -1 * Math.floor(idx / attributes.quadAttrs.columns),
+                endY: idx % attributes.quadAttrs.columns - 1,
+                idx: idx
+            }));
+            coordinates.map(startXYPair => {
+                const endCell = coordinates.find(endXYPair =>
+                    endXYPair.startX === startXYPair.endY && endXYPair.startY === startXYPair.endX);
+                    return endCell ? quadCells[endCell.idx] : quadCells[startXYPair.idx];
+                }).forEach(rotatedCell => {
+                    console.log(`\n\n${JSON.stringify(rotatedCell)}\n\n`);
+                newCells[rotatedCell.cid] = quadCells[rotatedCell.idx]
+            });
+            return newCells;
+        }
+        else {
+            console.log(`Rotating quad ${quadCells[0].qid} counter-clockwise`);
+        }
+    }
 
-  const cellsToQuadFormat = (cells, columns, rowLength) => { //returns an array of 4 3x3 cell quads
+    const cellsToQuadFormat = (cells, columns, rowLength) => { //returns an array of 4 3x3 cell quads
       const cellSlicer = (cells, nwest, neast, cellsWidth) => [ //slices 3x3 quads of cells
           ...cells.slice(nwest, neast + 1),
           ...cells.slice(nwest + cellsWidth, neast + cellsWidth + 1),
@@ -72,6 +97,7 @@ function App() {
           }
       }
       else if (turnState.doRotate) {
+          const newCells = rotateQuad(quadCells, true);
           const newSelectors = selectors.slice();
           const newMessage = turnState.goPl1
               ? { text: 'Player 1\'s turn!', color: cellStyleVariants.firstPl.color }
@@ -81,6 +107,9 @@ function App() {
           setTurnState({ goPl1: turnState.goPl1, selectQuad: false, doRotate: false });
           setMessage(newMessage);
           setSelectors(newSelectors);
+          setQuads(cellsToQuadFormat(newCells, attributes.quadAttrs.columns,
+              attributes.boardAttrs.columns * attributes.quadAttrs.columns));
+          setCells(newCells);
       }
   };
 
@@ -105,11 +134,11 @@ function App() {
               newMessage = { text: 'Player 1, choose a quad', color: cellStyleVariants.secondPl.color };
           }
 
-          setCells(newCells);
-          setQuads(cellsToQuadFormat(newCells, attributes.quadAttrs.columns,
-              attributes.boardAttrs.columns * attributes.quadAttrs.columns));
           setMessage(newMessage);
           setTurnState({ goPl1: !turnState.goPl1, selectQuad: true, doRotate: false });
+          setQuads(cellsToQuadFormat(newCells, attributes.quadAttrs.columns,
+              attributes.boardAttrs.columns * attributes.quadAttrs.columns));
+          setCells(newCells);
       }
   };
 
