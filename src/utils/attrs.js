@@ -5,45 +5,56 @@ const arrayDims = {
     y: 6
 };
 
-const cellAttrs =  {
-    width: '20px',
-    height: '20px',
-    styles: {
-        empty: {
-            backgroundColor: grey[500],
+const cellStyleVariants = {
+    empty: {
+        backgroundColor: grey[500],
             color: grey[50],
             borderColor: grey[500]
-        },
-        firstPl: {
-            backgroundColor: lightBlue[200],
+    },
+    firstPl: {
+        backgroundColor: lightBlue[200],
             color: grey[50],
             borderColor: lightBlue[200]
-        },
-        secondPl: {
-            backgroundColor: orange[200],
+    },
+    secondPl: {
+        backgroundColor: orange[200],
             color: grey[50],
             borderColor: orange[200]
-        },
-        win: {
-            backgroundColor: green[400],
+    },
+    win: {
+        backgroundColor: green[400],
             color: grey[50],
             borderColor: green[400]
-        }
     }
+}
+
+const cellAttrs =  {
+    width: 50,
+    height: 50,
+    style: cellStyleVariants.empty
 };
 
 const quadAttrs = {
     cells: [],
     columns: 3,
-    width: '100%',
-    height: '100%',
+    width: 250,
+    height: 250,
+    direction: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#784115',
+    color: '#6d1016',
+    borderColor: '#784115',
     cellAttrs: cellAttrs
 };
 
 const boardAttrs =  {
     columns: 2,
-    width: '100%',
-    height: '100%'
+    width: 550,
+    height: 550,
+    direction: 'row',
+    alignItems: 'center',
+    justifyContent: 'center'
 };
 
 const attributes = {
@@ -54,6 +65,7 @@ const attributes = {
 
 export {
     arrayDims,
+    cellStyleVariants,
     boardAttrs,
     quadAttrs,
     cellAttrs,

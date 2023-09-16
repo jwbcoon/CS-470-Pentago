@@ -1,6 +1,6 @@
 import './App.css';
 import {useState} from "react";
-import {arrayDims, attributes, cellAttrs} from "./utils/attrs";
+import {arrayDims, attributes} from "./utils/attrs";
 import {Box} from "@mui/material";
 import {Board} from "./comp/Board";
 import {MessageCenter} from "./comp/MessageCenter";
@@ -8,7 +8,7 @@ import {MessageCenter} from "./comp/MessageCenter";
 function App() {
   const initializeCells = () => new Array(arrayDims.x * arrayDims.y)
       .fill({
-          ...cellAttrs.styles.empty
+          ...attributes.cellAttrs
       });
 
   const [message, setMessage] = useState('Welcome to Pentago!');
@@ -22,10 +22,10 @@ function App() {
 
   return (
     <Box
-        alignItems='center'
         sx={{
-            width: '100%',
-            height: '100%'
+            width: 1080,
+            height: 720,
+            alignItems: 'center'
         }}
     >
         <MessageCenter message={message}/>
