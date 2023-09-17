@@ -12,17 +12,18 @@ function App() {
         if (clockwise) {
             console.log(`Rotating quad ${quadCells[0].qid} clockwise`);
             const coordinates = quadCells.map((cell, idx) => ({
-                startX: (idx) => idx % attributes.quadAttrs.columns - 1,
-                startY: (idx) => Math.floor(idx / attributes.quadAttrs.columns),
-                endX: (idx) => -1 * Math.floor(idx / attributes.quadAttrs.columns),
-                endY: (idx) => idx % attributes.quadAttrs.columns - 1,
-                idx: idx
-            }));
+                    startX: (idx) => idx % attributes.quadAttrs.columns - 1,
+                    startY: (idx) => attributes.quadAttrs.columns - Math.floor((idx / attributes.quadAttrs.columns)) - 2,
+                    endX: (idx) => -1 * (attributes.quadAttrs.columns - Math.floor((idx / attributes.quadAttrs.columns)) - 2),
+                    endY: (idx) => idx % attributes.quadAttrs.columns - 1,
+                    idx: idx
+                })
+            );
             coordinates.map(xyPair => quadCells.reduce((endCell, currCell, idx) =>
-                    (xyPair.startX(xyPair.idx) === xyPair.endY(idx) && xyPair.startY(xyPair.idx) === xyPair.endX(idx))
-                        ? { ...currCell, endIdx: xyPair.idx } //add currCell on true, should happen once
-                        : { ...endCell, endIdx: idx } //accumulate nothing on false
-                )).forEach((cell, idx) => {
+                    (xyPair.startX(xyPair.idx) === xyPair.endX(idx) && xyPair.startY(xyPair.idx) === xyPair.endY(idx))
+                        ? currCell //add currCell on true, should happen once
+                        : endCell //accumulate nothing on false
+                ), {}).forEach((cell, idx) => {
                     const [temp, tempIdx] = [newCells[cell.cid], newCells.indexOf(quadCells[idx])];
                     newCells[cell.cid] = quadCells[idx];
                     newCells[tempIdx] = temp;
@@ -108,8 +109,7 @@ function App() {
           setTurnState({ goPl1: turnState.goPl1, selectQuad: false, doRotate: false });
           setMessage(newMessage);
           setSelectors(newSelectors);
-          setQuads(cellsToQuadFormat(newCells, attributes.quadAttrs.columns,
-              attributes.boardAttrs.columns * attributes.quadAttrs.columns));
+          setQuads(cellsToQuadFormat(newCells, attributes.quadAttrs.columns, quads[qid - 1].length));
           setCells(newCells);
       }
   };
@@ -137,8 +137,7 @@ function App() {
 
           setMessage(newMessage);
           setTurnState({ goPl1: !turnState.goPl1, selectQuad: true, doRotate: false });
-          setQuads(cellsToQuadFormat(newCells, attributes.quadAttrs.columns,
-              attributes.boardAttrs.columns * attributes.quadAttrs.columns));
+          setQuads(cellsToQuadFormat(newCells, attributes.quadAttrs.columns, quads[qid - 1].length));
           setCells(newCells);
       }
   };
