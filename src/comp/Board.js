@@ -4,7 +4,7 @@ import {forwardRef, Fragment} from "react";
 
 const KeyboardInput = forwardRef((props, ref) => {
 
-    const {onKeyDownHandler, onBlurHandler} = props;
+    const {callbackQuads, onKeyDownHandler, onBlurHandler} = props;
 
     return (
         <input
@@ -14,7 +14,7 @@ const KeyboardInput = forwardRef((props, ref) => {
                 top: '-9999px',
                 left: '-9999px',
             }}
-            onKeyDown={event => onKeyDownHandler(event)}
+            onKeyDown={event => onKeyDownHandler(event, callbackQuads)}
             onBlur={event => onBlurHandler(event)}
             ref={ref}
         />
@@ -53,14 +53,15 @@ const Quad = props => {
 
 
 const Board = props => {
-    const {attrs, quads, selectors,
-          onClickQuadHandler, onClickCellHandler,
-          onKeyDownHandler, onBlurHandler, inputRef} = props;
+    const {attrs, quads, selectors, handlers, inputRef} = props;
 
     // noinspection JSValidateTypes
     return (
         <Container>
-            <KeyboardInput onKeyDownHandler={onKeyDownHandler} onBlurHandler={onBlurHandler} ref={inputRef}/>
+            <KeyboardInput callbackQuads={quads}
+                           onKeyDownHandler={handlers.onKeyDownHandler}
+                           onBlurHandler={handlers.onBlurHandler}
+                           ref={inputRef}/>
             <Grid container
                   columns={attrs.boardAttrs.columns}
                   sx={{ ...attrs.boardAttrs }}
@@ -78,8 +79,8 @@ const Board = props => {
                                                  padding: 1 }}>
                                     <Quad attrs={attrs}
                                           cells={quadCells}
-                                          onClickQuadHandler={onClickQuadHandler}
-                                          onClickCellHandler={onClickCellHandler}/>
+                                          onClickQuadHandler={handlers.onClickQuadHandler}
+                                          onClickCellHandler={handlers.onClickCellHandler}/>
                                 </Container>
                             </Grid>
                         )

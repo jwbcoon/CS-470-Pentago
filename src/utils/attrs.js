@@ -4,6 +4,14 @@ const arrayDims = {
     y: 6
 };
 
+const rotateCtlButtonStyle = {
+    width: 250,
+    height: 80,
+    textColor: '#fafafa',
+    backgroundColor: '#082837',
+    borderColor: '#81d4fa'
+}
+
 const cellStyleVariants = {
     empty: {
         backgroundColor: '#757575',
@@ -62,6 +70,7 @@ const attributes = {
 
 export {
     arrayDims,
+    rotateCtlButtonStyle,
     cellStyleVariants,
     boardAttrs,
     quadAttrs,
