@@ -9,30 +9,25 @@ function App() {
 
     const rotateQuad = (quadCells, clockwise) => {
         const newCells = cells.slice();
-        if (clockwise) {
-            console.log(`Rotating quad ${quadCells[0].qid} clockwise`);
-            const coordinates = quadCells.map((cell, idx) => ({
-                    startX: (idx) => idx % attributes.quadAttrs.columns - 1,
-                    startY: (idx) => attributes.quadAttrs.columns - Math.floor((idx / attributes.quadAttrs.columns)) - 2,
-                    endX: (idx) => -1 * (attributes.quadAttrs.columns - Math.floor((idx / attributes.quadAttrs.columns)) - 2),
-                    endY: (idx) => idx % attributes.quadAttrs.columns - 1,
-                    idx: idx
-                })
-            );
-            coordinates.map(xyPair => quadCells.reduce((endCell, currCell, idx) =>
-                    (xyPair.startX(xyPair.idx) === xyPair.endX(idx) && xyPair.startY(xyPair.idx) === xyPair.endY(idx))
-                        ? currCell //add currCell on true, should happen once
-                        : endCell //accumulate nothing on false
-                ), {}).forEach((cell, idx) => {
-                    const [temp, tempIdx] = [newCells[cell.cid], newCells.indexOf(quadCells[idx])];
-                    newCells[cell.cid] = quadCells[idx];
-                    newCells[tempIdx] = temp;
-            });
-            return newCells;
-        }
-        else {
-            console.log(`Rotating quad ${quadCells[0].qid} counter-clockwise`);
-        }
+        console.log(`Rotating quad ${quadCells[0].qid} ${clockwise ? 'clockwise' : 'counter clockwise'}`);
+        const coordinates = quadCells.map((cell, idx) => ({
+                startX: (idx) => idx % attributes.quadAttrs.columns - 1,
+                startY: (idx) => attributes.quadAttrs.columns - Math.floor((idx / attributes.quadAttrs.columns)) - 2,
+                endX: (idx) => (clockwise ? -1 : 1) * (attributes.quadAttrs.columns - Math.floor((idx / attributes.quadAttrs.columns)) - 2),
+                endY: (idx) => (clockwise ? 1 : -1) * (idx % attributes.quadAttrs.columns - 1),
+                idx: idx
+            })
+        );
+        coordinates.map(xyPair => quadCells.reduce((endCell, currCell, idx) =>
+            (xyPair.startX(xyPair.idx) === xyPair.endX(idx) && xyPair.startY(xyPair.idx) === xyPair.endY(idx))
+                ? currCell //add currCell on true, should happen once
+                : endCell //accumulate nothing on false
+        ), {}).forEach((cell, idx) => {
+            const [temp, tempIdx] = [newCells[cell.cid], newCells.indexOf(quadCells[idx])];
+            newCells[cell.cid] = quadCells[idx];
+            newCells[tempIdx] = temp;
+        });
+        return newCells;
     }
 
     const cellsToQuadFormat = (cells, columns, rowLength) => { //returns an array of 4 3x3 cell quads
@@ -99,7 +94,7 @@ function App() {
           }
       }
       else if (turnState.doRotate) {
-          const newCells = rotateQuad(quadCells, true);
+          const newCells = rotateQuad(quadCells, false);
           const newSelectors = selectors.slice();
           const newMessage = turnState.goPl1
               ? { text: 'Player 1\'s turn!', color: cellStyleVariants.firstPl.color }
@@ -180,17 +175,34 @@ function App() {
           setSelectors(newSelectors);
       }
       if (turnState.doRotate) {
-          if (key.match(/^(ArrowUp|w)$/)) {
-              console.log(key);
-          }
-          if (key.match(/^(ArrowDown|s)$/)) {
-              console.log(key);
-          }
+          console.log(`currIdx = ${currIdx}, quads[currIdx] = ${JSON.stringify(quads[currIdx])}`)
           if (key.match(/^(ArrowLeft|a)$/)) {
-              console.log(key);
+              const newCells = rotateQuad(quads[currIdx], true);
+              const newSelectors = selectors.slice();
+              const newMessage = turnState.goPl1
+                  ? { text: 'Player 1\'s turn!', color: cellStyleVariants.firstPl.color }
+                  : { text: 'Player 2\'s turn!', color: cellStyleVariants.secondPl.color };
+
+              newSelectors[currIdx].backgroundColor = '#00000000';
+              setTurnState({ goPl1: turnState.goPl1, selectQuad: false, doRotate: false });
+              setMessage(newMessage);
+              setSelectors(newSelectors);
+              setQuads(cellsToQuadFormat(newCells, attributes.quadAttrs.columns, quads[currIdx].length));
+              setCells(newCells);
           }
           if (key.match(/^(ArrowRight|d)$/)) {
-              console.log(key);
+              const newCells = rotateQuad(quads[currIdx], false);
+              const newSelectors = selectors.slice();
+              const newMessage = turnState.goPl1
+                  ? { text: 'Player 1\'s turn!', color: cellStyleVariants.firstPl.color }
+                  : { text: 'Player 2\'s turn!', color: cellStyleVariants.secondPl.color };
+
+              newSelectors[currIdx].backgroundColor = '#00000000';
+              setTurnState({ goPl1: turnState.goPl1, selectQuad: false, doRotate: false });
+              setMessage(newMessage);
+              setSelectors(newSelectors);
+              setQuads(cellsToQuadFormat(newCells, attributes.quadAttrs.columns, quads[currIdx].length));
+              setCells(newCells);
           }
       }
   };
