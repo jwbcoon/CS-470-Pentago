@@ -1,6 +1,6 @@
 import './App.css';
 import {useRef, useState} from "react";
-import {arrayDims, attributes, cellAttrs, cellStyleVariants, rotateCtlButtonStyle} from "./utils/attrs";
+import {arrayDims, attributes, cellAttrs, cellStyleVariants, rotateCtlAttrs} from "./utils/attrs";
 import {Box, Container, Grid} from "@mui/material";
 import {Board} from "./comp/Board";
 import {MessageCenter} from "./comp/MessageCenter";
@@ -12,6 +12,7 @@ function App() {
         const newCells = cells.slice();
         console.log(`Rotating quad ${quadCells[0].qid} ${clockwise ? 'clockwise' : 'counter clockwise'}`);
 
+        // array of coordinates associated with the quadCells such that the center element is the origin (0, 0)
         const coordinates = quadCells.map((cell, idx) => ({
                 startX: (idx) => idx % attributes.quadAttrs.columns - 1,
                 startY: (idx) => attributes.quadAttrs.columns - Math.floor(idx / attributes.quadAttrs.columns) - 2,
@@ -64,19 +65,19 @@ function App() {
 
 
 
-  const [message, setMessage] = useState({
+  const [message, setMessage] = useState({ // message displayed in MessageCenter
       text: 'Welcome to Pentago! It is Player 1\'s turn',
       color: cellStyleVariants.win.color
   });
-  const [turnState, setTurnState] = useState({
+  const [turnState, setTurnState] = useState({ // set of bools defining the state of the game
       goPl1: true,
       selectQuad: false,
       doRotate: false
   });
-  const [selectors, setSelectors] = useState(initializeSelectors);
-  const [cells, setCells] = useState(initializeCells);
-  const [quads, setQuads] = useState(initializeQuads);
-  const inputRef = useRef(null);
+  const [selectors, setSelectors] = useState(initializeSelectors); // React component for highlighting quad choices
+  const [cells, setCells] = useState(initializeCells); // Data for tracking all 6x6 cells, must update to affect state
+  const [quads, setQuads] = useState(initializeQuads); // Data for tracking 3x3 quads of cells within the cells array, must update to affect state
+  const inputRef = useRef(null); // Reference for enabling keyboard input at all times
 
   const onClickQuadHandler = (quadCells, qid) => { //quadCells are an array of 9 objects whose 'cid' key corresponds
                                                     //to the index of that element within the cells array
@@ -236,7 +237,7 @@ function App() {
                 />
             </Grid>
             <Grid item xs={1}>
-                <RotateCtl attrs={rotateCtlButtonStyle} onClickHandler={onClickRCTL}/>
+                <RotateCtl attrs={rotateCtlAttrs} onClickHandler={onClickRCTL}/>
             </Grid>
         </Grid>
     </Container>

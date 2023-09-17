@@ -7,10 +7,18 @@ const arrayDims = {
 const rotateCtlButtonStyle = {
     width: 250,
     height: 80,
+    borderWidth: 1,
     textColor: '#fafafa',
     backgroundColor: '#082837',
     borderColor: '#81d4fa'
-}
+};
+
+const rotateCtlAttrs = {
+    paddingRight: 20,
+    direction:'row',
+    gap: 10,
+    rotateCtlButtonStyle: rotateCtlButtonStyle
+};
 
 const cellStyleVariants = {
     empty: {
@@ -42,7 +50,7 @@ const cellAttrs =  {
 };
 
 const quadAttrs = {
-    columns: 3,
+    columns: arrayDims.x / 2,
     width: 250,
     height: 250,
     direction: 'row',
@@ -54,12 +62,12 @@ const quadAttrs = {
 };
 
 const boardAttrs =  {
-    columns: 2,
+    columns: arrayDims.y / quadAttrs.columns,
     width: 550,
     height: 550,
     direction: 'row',
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
 };
 
 const attributes = {
@@ -70,6 +78,7 @@ const attributes = {
 
 export {
     arrayDims,
+    rotateCtlAttrs,
     rotateCtlButtonStyle,
     cellStyleVariants,
     boardAttrs,
