@@ -12,19 +12,20 @@ function App() {
         if (clockwise) {
             console.log(`Rotating quad ${quadCells[0].qid} clockwise`);
             const coordinates = quadCells.map((cell, idx) => ({
-                startX: idx % attributes.quadAttrs.columns - 1,
-                startY: Math.floor(idx / attributes.quadAttrs.columns),
-                endX: -1 * Math.floor(idx / attributes.quadAttrs.columns),
-                endY: idx % attributes.quadAttrs.columns - 1,
+                startX: (idx) => idx % attributes.quadAttrs.columns - 1,
+                startY: (idx) => Math.floor(idx / attributes.quadAttrs.columns),
+                endX: (idx) => -1 * Math.floor(idx / attributes.quadAttrs.columns),
+                endY: (idx) => idx % attributes.quadAttrs.columns - 1,
                 idx: idx
             }));
-            coordinates.map(startXYPair => {
-                const endCell = coordinates.find(endXYPair =>
-                    endXYPair.startX === startXYPair.endY && endXYPair.startY === startXYPair.endX);
-                    return endCell ? quadCells[endCell.idx] : quadCells[startXYPair.idx];
-                }).forEach(rotatedCell => {
-                    console.log(`\n\n${JSON.stringify(rotatedCell)}\n\n`);
-                newCells[rotatedCell.cid] = quadCells[rotatedCell.idx]
+            coordinates.map(xyPair => quadCells.reduce((endCell, currCell, idx) =>
+                    (xyPair.startX(xyPair.idx) === xyPair.endY(idx) && xyPair.startY(xyPair.idx) === xyPair.endX(idx))
+                        ? { ...currCell, endIdx: xyPair.idx } //add currCell on true, should happen once
+                        : { ...endCell, endIdx: idx } //accumulate nothing on false
+                )).forEach((cell, idx) => {
+                    const [temp, tempIdx] = [newCells[cell.cid], newCells.indexOf(quadCells[idx])];
+                    newCells[cell.cid] = quadCells[idx];
+                    newCells[tempIdx] = temp;
             });
             return newCells;
         }
