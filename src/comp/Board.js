@@ -74,8 +74,7 @@ const Board = props => {
                                       p: 1
                                   }}
                             >
-                                <Container justifyContent='center' margin={0}
-                                           sx={{ backgroundColor: selectors[idx].backgroundColor,
+                                <Container sx={{ backgroundColor: selectors[idx].backgroundColor,
                                                  padding: 1 }}>
                                     <Quad attrs={attrs}
                                           cells={quadCells}

@@ -63,7 +63,7 @@ function App() {
           if (idx.toString().match(/^((21)|(22)|(23)|(27)|(28)|(29)|(33)|(34)|(35))$/)) return 4;
       }
       return new Array(arrayDims.x * arrayDims.y).fill({ ...cellAttrs })
-          .map((cell, idx) => ({ ...cellAttrs, cid: idx, qid: determineQuad(idx), pos: idx }));
+          .map((cell, idx) => ({ ...cellAttrs, cid: -1 * idx, qid: determineQuad(idx), pos: idx }));
   };
 
   const initializeQuads = () => cellsToQuadFormat(cells, attributes.quadAttrs.columns,
@@ -128,13 +128,15 @@ function App() {
           if (turnState.goPl1) {
               newCells[pos] = {
                   ...cells[pos],
-                  style: cellStyleVariants.firstPl
+                  style: cellStyleVariants.firstPl,
+                  cid: -1 * cells[pos].cid
               };
               newMessage = { text: 'Player 1, choose a quad', color: cellStyleVariants.firstPl.color };
           } else {
               newCells[pos] = {
                   ...cells[pos],
-                  style: cellStyleVariants.secondPl
+                  style: cellStyleVariants.secondPl,
+                  cid: -1 * cells[pos].cid
               };
               newMessage = { text: 'Player 2, choose a quad', color: cellStyleVariants.secondPl.color };
           }
@@ -157,58 +159,168 @@ function App() {
 
   const onKeyDownHandler = (event, callbackQuads) => {
       const key = event.key;
-      const currIdx = selectors
-          .reduce((targetIdx, s, idx) => targetIdx + (s.backgroundColor === '#e4741d' ? idx : 0), 0);
-      const newSelectors = selectors.slice();
+      const qid = callbackQuads[0].qid;
 
-      if (turnState.selectQuad) {
-          if (key.match(/^(ArrowUp|w)$/)) {
-              newSelectors[currIdx - (currIdx - 2 >= 0 ? 2 : 0)] = {backgroundColor: '#e4741d'};
-              setMessage({ text: `Quad ${currIdx + 1 - (currIdx - 2 >= 0 ? 2 : 0)}?`, color: message.color });
-              if (currIdx - 2 >= 0)
-                  newSelectors[currIdx] = {backgroundColor: '#00000000'};
+      if (!turnState.doRotate && !turnState.selectQuad) {
+          const newCells = cells.slice();
+          const selectIdx = callbackQuads.flat()
+              .reduce((targetIdx, cell, idx) =>
+                  targetIdx + (cell.cid < 0 && cell.backgroundColor !== cellStyleVariants.empty ? cell.pos : 0), 0);
+
+          if (!cells.includes({ ...cellAttrs, style: cellStyleVariants.firstPl })) {
+              const start = Math.floor(Math.random() * cells.length);
+              if (cells[start].qid === qid) {
+                  newCells[start] = {
+                      ...cellAttrs,
+                      style: cellStyleVariants.firstPl,
+                      cid: -1 * cells[start].cid,
+                      qid: qid,
+                      pos: start
+                  };
+                  setCells(newCells);
+              }
           }
-          if (key.match(/^(ArrowDown|s)$/)) {
-              newSelectors[currIdx + (currIdx + 2 < selectors.length ? 2 : 0)] = {backgroundColor: '#e4741d'};
-              setMessage({ text: `Quad ${currIdx + 1 + (currIdx + 2 < selectors.length ? 2 : 0)}?`, color: message.color });
-              if (currIdx + 2 < selectors.length)
-                  newSelectors[currIdx] = {backgroundColor: '#00000000'};
-          }
-          if (key.match(/^(ArrowLeft|a)$/)) {
-              newSelectors[currIdx - (currIdx !== 2 && currIdx - 1 >= 0 ? 1 : 0)] = {backgroundColor: '#e4741d'};
-              setMessage({ text: `Quad ${currIdx + 1 - (currIdx !== 2 && currIdx - 1 >= 0 ? 1 : 0)}?`, color: message.color });
-              if (currIdx !== 2 && currIdx - 1 >= 0)
-                  newSelectors[currIdx] = {backgroundColor: '#00000000'};
-          }
-          if (key.match(/^(ArrowRight|d)$/)) {
-              newSelectors[currIdx + (currIdx !== 1 && currIdx + 1 < selectors.length ? 1 : 0)] = {backgroundColor: '#e4741d'};
-              setMessage({ text: `Quad ${currIdx + 1 + (currIdx !== 1 && currIdx + 1 < selectors.length ? 1 : 0)}?`, color: message.color });
-              if (currIdx !== 1 && currIdx + 1 < selectors.length)
-                  newSelectors[currIdx] = {backgroundColor: '#00000000'};
+          if (cells[selectIdx].qid === qid) {
+              if (key.match(/^(ArrowUp|w)$/)) {
+                  newCells[selectIdx - (selectIdx - arrayDims.x >= 0 ? arrayDims.x : 0)] = {
+                      ...cellAttrs,
+                      style: cellStyleVariants.firstPl,
+                      cid: -1 * cells[selectIdx - (selectIdx - arrayDims.x >= 0 ? arrayDims.x : 0)].cid,
+                      qid: qid,
+                      pos: selectIdx - (selectIdx - arrayDims.x >= 0 ? arrayDims.x : 0)
+                  };
+                  if (selectIdx - arrayDims.x >= 0)
+                      newCells[selectIdx] = {
+                          ...cellAttrs,
+                          style: cellStyleVariants.empty,
+                          cid: -1 * cells[selectIdx].cid,
+                          qid: qid,
+                          pos: selectIdx
+                      }
+              }
+              if (key.match(/^(ArrowDown|s)$/)) {
+                  newCells[selectIdx + (selectIdx + arrayDims.x >= 0 ? arrayDims.x : 0)] = {
+                      ...cellAttrs,
+                      style: cellStyleVariants.firstPl,
+                      cid: -1 * cells[selectIdx + (selectIdx + arrayDims.x >= 0 ? arrayDims.x : 0)].cid,
+                      qid: qid,
+                      pos: selectIdx + (selectIdx + arrayDims.x >= 0 ? arrayDims.x : 0)
+                  };
+                  if (selectIdx + arrayDims.x >= 0)
+                      newCells[selectIdx] = {
+                          ...cellAttrs,
+                          style: cellStyleVariants.empty,
+                          cid: -1 * cells[selectIdx].cid,
+                          qid: qid,
+                          pos: selectIdx
+                      }
+              }
+              if (key.match(/^(ArrowLeft|a)$/)) {
+                  newCells[selectIdx - (selectIdx % cells.length !== 0 && selectIdx - 1 >= 0 ? 1 : 0)] = {
+                      ...cellAttrs,
+                      style: cellStyleVariants.firstPl,
+                      cid: -1 * cells[selectIdx - (selectIdx % cells.length !== 0 && selectIdx - 1 >= 0 ? 1 : 0)].cid,
+                      qid: qid,
+                      pos: selectIdx - (selectIdx % cells.length !== 0 && selectIdx - 1 >= 0 ? 1 : 0)
+                  };
+                  if (selectIdx % cells.length !== 0 && selectIdx - 1 >= 0) //if the index is not currently on a left wall
+                      newCells[selectIdx] = {
+                          ...cellAttrs,
+                          style: cellStyleVariants.empty,
+                          cid: -1 * cells[selectIdx].cid,
+                          qid: qid,
+                          pos: selectIdx
+                      }
+              }
+              if (key.match(/^(ArrowRight|d)$/)) {
+                  newCells[selectIdx + ((selectIdx + 1) % cells.length !== 0 && selectIdx + 1 < cells.length ? 1 : 0)] = {
+                      ...cellAttrs,
+                      style: cellStyleVariants.firstPl,
+                      cid: -1 * cells[selectIdx + ((selectIdx + 1) % cells.length !== 0 && selectIdx + 1 < cells.length ? 1 : 0)].cid,
+                      qid: qid,
+                      pos: selectIdx + ((selectIdx + 1) % cells.length !== 0 && selectIdx + 1 < cells.length ? 1 : 0)
+                  };
+                  if ((selectIdx + 1) % cells.length !== 0 && selectIdx + 1 < cells.length) //if the indes is not currently on a right wall
+                      newCells[selectIdx] = {
+                          ...cellAttrs,
+                          style: cellStyleVariants.empty,
+                          cid: -1 * cells[selectIdx].cid,
+                          qid: qid,
+                          pos: selectIdx
+                      }
+              }
           }
           if (key.match(/^(Enter)$/)) {
-              setTurnState({goPl1: turnState.goPl1, selectQuad: false, doRotate: true});
-              setMessage({ text: 'Rotate! Choose a direction', color: message.color });
-          }
-          setSelectors(newSelectors);
-      }
-      if (turnState.doRotate) {
-          console.log(currIdx);
-          if (key.match(/^(ArrowLeft|a)$/))
-              setMessage({ text: 'Rotate!\nCounter Clockwise?', color: message.color });
-          if (key.match(/^(ArrowRight|d)$/))
-              setMessage({ text: 'Rotate!\nClockwise?', color: message.color });
-          if (key.match(/^(Enter)$/)) {
-              const newCells = rotateQuad(callbackQuads[currIdx], !message.text.match(/(Counter Clockwise\?)$/));
-              newSelectors[currIdx].backgroundColor = '#00000000';
-
-              setSelectors(newSelectors);
+              setTurnState({goPl1: turnState.goPl1, selectQuad: true, doRotate: false});
               setMessage(turnState.goPl1
-                  ? { text: 'Player 1\'s turn!', color: cellStyleVariants.firstPl.color }
-                  : { text: 'Player 2\'s turn!', color: cellStyleVariants.secondPl.color });
-              setTurnState({ goPl1: turnState.goPl1, selectQuad: false, doRotate: false });
-              setQuads(cellsToQuadFormat(newCells, attributes.quadAttrs.columns, callbackQuads[currIdx].length));
-              setCells(newCells);
+                  ? {text: 'Player 1, choose a quad', color: message.color}
+                  : {text: 'Player 2, choose a quad', color: message.color});
+          }
+
+      }
+      else {
+          const currIdx = selectors
+              .reduce((targetIdx, s, idx) => targetIdx + (s.backgroundColor === '#e4741d' ? idx : 0), 0);
+          const newSelectors = selectors.slice();
+
+          if (turnState.selectQuad) {
+              if (key.match(/^(ArrowUp|w)$/)) {
+                  newSelectors[currIdx - (currIdx - 2 >= 0 ? 2 : 0)] = {backgroundColor: '#e4741d'};
+                  setMessage({text: `Quad ${currIdx + 1 - (currIdx - 2 >= 0 ? 2 : 0)}?`, color: message.color});
+                  if (currIdx - 2 >= 0)
+                      newSelectors[currIdx] = {backgroundColor: '#00000000'};
+              }
+              if (key.match(/^(ArrowDown|s)$/)) {
+                  newSelectors[currIdx + (currIdx + 2 < selectors.length ? 2 : 0)] = {backgroundColor: '#e4741d'};
+                  setMessage({
+                      text: `Quad ${currIdx + 1 + (currIdx + 2 < selectors.length ? 2 : 0)}?`,
+                      color: message.color
+                  });
+                  if (currIdx + 2 < selectors.length)
+                      newSelectors[currIdx] = {backgroundColor: '#00000000'};
+              }
+              if (key.match(/^(ArrowLeft|a)$/)) {
+                  newSelectors[currIdx - (currIdx !== 2 && currIdx - 1 >= 0 ? 1 : 0)] = {backgroundColor: '#e4741d'};
+                  setMessage({
+                      text: `Quad ${currIdx + 1 - (currIdx !== 2 && currIdx - 1 >= 0 ? 1 : 0)}?`,
+                      color: message.color
+                  });
+                  if (currIdx !== 2 && currIdx - 1 >= 0)
+                      newSelectors[currIdx] = {backgroundColor: '#00000000'};
+              }
+              if (key.match(/^(ArrowRight|d)$/)) {
+                  newSelectors[currIdx + (currIdx !== 1 && currIdx + 1 < selectors.length ? 1 : 0)] = {backgroundColor: '#e4741d'};
+                  setMessage({
+                      text: `Quad ${currIdx + 1 + (currIdx !== 1 && currIdx + 1 < selectors.length ? 1 : 0)}?`,
+                      color: message.color
+                  });
+                  if (currIdx !== 1 && currIdx + 1 < selectors.length)
+                      newSelectors[currIdx] = {backgroundColor: '#00000000'};
+              }
+              if (key.match(/^(Enter)$/)) {
+                  setTurnState({goPl1: turnState.goPl1, selectQuad: false, doRotate: true});
+                  setMessage({text: 'Rotate! Choose a direction', color: message.color});
+              }
+              setSelectors(newSelectors);
+          }
+          if (turnState.doRotate) {
+              console.log(currIdx);
+              if (key.match(/^(ArrowLeft|a)$/))
+                  setMessage({text: 'Rotate!\nCounter Clockwise?', color: message.color});
+              if (key.match(/^(ArrowRight|d)$/))
+                  setMessage({text: 'Rotate!\nClockwise?', color: message.color});
+              if (key.match(/^(Enter)$/)) {
+                  const newCells = rotateQuad(callbackQuads[currIdx], !message.text.match(/(Counter Clockwise\?)$/));
+                  newSelectors[currIdx].backgroundColor = '#00000000';
+
+                  setSelectors(newSelectors);
+                  setMessage(turnState.goPl1
+                      ? {text: 'Player 1\'s turn!', color: cellStyleVariants.firstPl.color}
+                      : {text: 'Player 2\'s turn!', color: cellStyleVariants.secondPl.color});
+                  setTurnState({goPl1: turnState.goPl1, selectQuad: false, doRotate: false});
+                  setQuads(cellsToQuadFormat(newCells, attributes.quadAttrs.columns, callbackQuads[currIdx].length));
+                  setCells(newCells);
+              }
           }
       }
   };
