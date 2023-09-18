@@ -28,9 +28,9 @@ function App() {
                     }
                     if (longest.length < sequence.length)
                         longest = sequence;
-                    return longest
                 }
             }
+            return longest;
         }
         else return longest;
     }, []);
