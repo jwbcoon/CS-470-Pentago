@@ -25,10 +25,14 @@ function App() {
             (xyPair.startX(xyPair.idx) === xyPair.endX(idx) && xyPair.startY(xyPair.idx) === xyPair.endY(idx))
                 ? currCell //add currCell on true, should happen once
                 : endCell //accumulate nothing on false
-        ), {}).forEach((cell, idx) => {
-            const [temp, tempIdx] = [newCells[cell.cid], newCells.indexOf(quadCells[idx])];
-            newCells[cell.cid] = quadCells[idx];
+        )).forEach((cell, idx) => { //swap each cell from its start location with the cell of its end location
+            const [temp, tempIdx] = [newCells[cell.pos], newCells.indexOf(quadCells[idx])];
+            newCells[cell.pos] = quadCells[idx];
             newCells[tempIdx] = temp;
+
+            // update the pos variable to persist index position across rotations
+            newCells[tempIdx].pos = cell.pos;
+            newCells[cell.pos].pos = tempIdx;
         });
         return newCells;
     }
@@ -40,10 +44,14 @@ function App() {
           ...cells.slice(nwest + 2 * cellsWidth, neast + 2 * cellsWidth + 1)
       ];
       return [
-          cellSlicer(cells, 0, columns - 1, rowLength), //northwest section
-          cellSlicer(cells, columns, rowLength - 1, rowLength), //northeast section
-          cellSlicer(cells, columns * rowLength, columns * rowLength + columns - 1, rowLength), //southwest section
-          cellSlicer(cells, columns * rowLength + columns, columns * rowLength + rowLength - 1, rowLength) //southeast section
+          cellSlicer(cells, 0, columns - 1, rowLength)
+              .map(cell => { cell.pos = cells.indexOf(cell); return cell; }), //northwest section
+          cellSlicer(cells, columns, rowLength - 1, rowLength)
+              .map(cell => { cell.pos = cells.indexOf(cell); return cell; }), //northeast section
+          cellSlicer(cells, columns * rowLength, columns * rowLength + columns - 1, rowLength)
+              .map(cell => { cell.pos = cells.indexOf(cell); return cell; }), //southwest section
+          cellSlicer(cells, columns * rowLength + columns, columns * rowLength + rowLength - 1, rowLength)
+              .map(cell => { cell.pos = cells.indexOf(cell); return cell; }) //southeast section
       ]
     }
 
@@ -55,7 +63,7 @@ function App() {
           if (idx.toString().match(/^((21)|(22)|(23)|(27)|(28)|(29)|(33)|(34)|(35))$/)) return 4;
       }
       return new Array(arrayDims.x * arrayDims.y).fill({ ...cellAttrs })
-          .map((cell, idx) => ({ ...cellAttrs, cid: idx, qid: determineQuad(idx) }));
+          .map((cell, idx) => ({ ...cellAttrs, cid: idx, qid: determineQuad(idx), pos: idx }));
   };
 
   const initializeQuads = () => cellsToQuadFormat(cells, attributes.quadAttrs.columns,
@@ -88,15 +96,16 @@ function App() {
               const newSelectors = selectors.map((selector, idx) => idx === qid - 1
                   ? { backgroundColor: '#e4741d' }
                   : { backgroundColor: '#00000000' });
+              setMessage({ text: `Quad ${qid}?`, color: message.color });
               setSelectors(newSelectors);
           }
           else {
               setTurnState({goPl1: turnState.goPl1, selectQuad: false, doRotate: true});
-              setMessage({ text: 'Rotate!', color: message.color });
+              setMessage({ text: 'Rotate! Choose a direction', color: message.color });
           }
       }
       else if (turnState.doRotate) {
-          const newCells = rotateQuad(quadCells, !message.text.match(/^(Counter Clockwise)$/));
+          const newCells = rotateQuad(quadCells, !message.text.match(/(Counter Clockwise\?)$/));
           const newSelectors = selectors.slice();
           const newMessage = turnState.goPl1
               ? { text: 'Player 1\'s turn!', color: cellStyleVariants.firstPl.color }
@@ -111,22 +120,20 @@ function App() {
       }
   };
 
-  const onClickCellHandler = (cid, qid, idx) => {
-      console.log(`I am cell ${cid} of quadrant ${qid} and my index is ${idx}`);
-
+  const onClickCellHandler = (pos, qid) => {
       if (!turnState.doRotate && !turnState.selectQuad) {
           const newCells = cells.slice();
           let newMessage = message;
 
           if (turnState.goPl1) {
-              newCells[cid] = {
-                  ...cells[cid],
+              newCells[pos] = {
+                  ...cells[pos],
                   style: cellStyleVariants.firstPl
               };
               newMessage = { text: 'Player 1, choose a quad', color: cellStyleVariants.firstPl.color };
           } else {
-              newCells[cid] = {
-                  ...cells[cid],
+              newCells[pos] = {
+                  ...cells[pos],
                   style: cellStyleVariants.secondPl
               };
               newMessage = { text: 'Player 2, choose a quad', color: cellStyleVariants.secondPl.color };
@@ -157,27 +164,31 @@ function App() {
       if (turnState.selectQuad) {
           if (key.match(/^(ArrowUp|w)$/)) {
               newSelectors[currIdx - (currIdx - 2 >= 0 ? 2 : 0)] = {backgroundColor: '#e4741d'};
+              setMessage({ text: `Quad ${currIdx + 1}?`, color: message.color });
               if (currIdx - 2 >= 0)
                   newSelectors[currIdx] = {backgroundColor: '#00000000'};
           }
           if (key.match(/^(ArrowDown|s)$/)) {
               newSelectors[currIdx + (currIdx + 2 < selectors.length ? 2 : 0)] = {backgroundColor: '#e4741d'};
+              setMessage({ text: `Quad ${currIdx + 1}?`, color: message.color });
               if (currIdx + 2 < selectors.length)
                   newSelectors[currIdx] = {backgroundColor: '#00000000'};
           }
           if (key.match(/^(ArrowLeft|a)$/)) {
               newSelectors[currIdx - (currIdx !== 2 && currIdx - 1 >= 0 ? 1 : 0)] = {backgroundColor: '#e4741d'};
+              setMessage({ text: `Quad ${currIdx + 1}?`, color: message.color });
               if (currIdx !== 2 && currIdx - 1 >= 0)
                   newSelectors[currIdx] = {backgroundColor: '#00000000'};
           }
           if (key.match(/^(ArrowRight|d)$/)) {
               newSelectors[currIdx + (currIdx !== 1 && currIdx + 1 < selectors.length ? 1 : 0)] = {backgroundColor: '#e4741d'};
+              setMessage({ text: `Quad ${currIdx + 1}?`, color: message.color });
               if (currIdx !== 1 && currIdx + 1 < selectors.length)
                   newSelectors[currIdx] = {backgroundColor: '#00000000'};
           }
           if (key.match(/^(Enter)$/)) {
               setTurnState({goPl1: turnState.goPl1, selectQuad: false, doRotate: true});
-              setMessage({ text: 'Rotate!', color: message.color });
+              setMessage({ text: 'Rotate! Choose a direction', color: message.color });
           }
           setSelectors(newSelectors);
       }
@@ -188,7 +199,7 @@ function App() {
           if (key.match(/^(ArrowRight|d)$/))
               setMessage({ text: 'Rotate!\nClockwise?', color: message.color });
           if (key.match(/^(Enter)$/)) {
-              const newCells = rotateQuad(callbackQuads[currIdx], !message.text.match(/^(Counter Clockwise)$/));
+              const newCells = rotateQuad(callbackQuads[currIdx], !message.text.match(/(Counter Clockwise\?)$/));
               newSelectors[currIdx].backgroundColor = '#00000000';
 
               setSelectors(newSelectors);
