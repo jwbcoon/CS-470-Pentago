@@ -8,7 +8,34 @@ import {RotateCtl} from "./comp/RotateCtl";
 
 function App() {
 
-    const rotateQuad = (quadCells, clockwise) => {
+    const longestLine = cells => cells.reduce((longest, cell, idx, array) => {
+        if (longest.length < 5) {
+            const [up, down, left, right] = [-1 * arrayDims.x,
+                                                      arrayDims.x,
+                                                      -1, 1];
+            const withinBounds = (index, diff) => index >= 0 && index < array.length
+                ? index : index + diff;
+            const sequence = [ cell ];
+
+            for (let i = withinBounds(idx + up, -1 * up); i <= withinBounds(idx + down, -1 * down); i += down) {
+                for (let j = withinBounds(i + left, -1 * left); j <= withinBounds(i + right, -1 * right); j += right) {
+                    let dir = 0;
+                    while (cells[withinBounds(j + dir, -1 * dir)].backgroundColor === sequence[sequence.length - 1].backgroundColor
+                        && cells[withinBounds(j + dir, -1 * dir)].cid !== sequence[sequence.length - 1].cid
+                        && sequence.length < 5) {
+                        sequence.push(cells[j + dir]);
+                        dir += j - idx;
+                    }
+                    if (longest.length < sequence.length)
+                        longest = sequence;
+                    return longest
+                }
+            }
+        }
+        else return longest;
+    }, []);
+
+    const rotateQuad = (quadCells, clockwise = true) => {
         const newCells = cells.slice();
         console.log(`Rotating quad ${quadCells[0].qid} ${clockwise ? 'clockwise' : 'counter clockwise'}`);
 
@@ -91,63 +118,73 @@ function App() {
                                                     //to the index of that element within the cells array
       console.log(`Clicked on quad ${qid}!`);
 
-      if (turnState.selectQuad) {
-          if (selectors[qid - 1].backgroundColor === '#00000000') {
-              const newSelectors = selectors.map((selector, idx) => idx === qid - 1
-                  ? { backgroundColor: '#e4741d' }
-                  : { backgroundColor: '#00000000' });
-              setMessage({ text: `Quad ${qid}?`, color: message.color });
-              setSelectors(newSelectors);
-          }
-          else {
-              setTurnState({goPl1: turnState.goPl1, selectQuad: false, doRotate: true});
-              setMessage({ text: 'Rotate! Choose a direction', color: message.color });
-          }
-      }
-      else if (turnState.doRotate) {
-          const newCells = rotateQuad(quadCells, !message.text.match(/(Counter Clockwise\?)$/));
-          const newSelectors = selectors.slice();
-          const newMessage = turnState.goPl1
-              ? { text: 'Player 1\'s turn!', color: cellStyleVariants.firstPl.color }
-              : { text: 'Player 2\'s turn!', color: cellStyleVariants.secondPl.color };
-          newSelectors[qid - 1].backgroundColor = '#00000000';
+      if (!turnState.selectQuad || !turnState.doRotate) {
+          if (turnState.selectQuad) {
+              if (selectors[qid - 1].backgroundColor === '#00000000') {
+                  const newSelectors = selectors.map((selector, idx) => idx === qid - 1
+                      ? {backgroundColor: '#e4741d'}
+                      : {backgroundColor: '#00000000'});
+                  setMessage({text: `Quad ${qid}?`, color: message.color});
+                  setSelectors(newSelectors);
+              } else {
+                  setTurnState({goPl1: turnState.goPl1, selectQuad: false, doRotate: true});
+                  setMessage({text: 'Rotate! Choose a direction', color: message.color});
+              }
+          } else if (turnState.doRotate) {
+              const newCells = rotateQuad(quadCells, !message.text.match(/(Counter Clockwise\?)$/));
+              const newSelectors = selectors.slice();
+              const newMessage = turnState.goPl1
+                  ? {text: 'Player 1\'s turn!', color: cellStyleVariants.firstPl.color}
+                  : {text: 'Player 2\'s turn!', color: cellStyleVariants.secondPl.color};
+              newSelectors[qid - 1].backgroundColor = '#00000000';
 
-          setTurnState({ goPl1: turnState.goPl1, selectQuad: false, doRotate: false });
-          setMessage(newMessage);
-          setSelectors(newSelectors);
-          setQuads(cellsToQuadFormat(newCells, attributes.quadAttrs.columns, quads[qid - 1].length));
-          setCells(newCells);
+              setTurnState({goPl1: turnState.goPl1, selectQuad: false, doRotate: false});
+              setMessage(newMessage);
+              setSelectors(newSelectors);
+              setQuads(cellsToQuadFormat(newCells, attributes.quadAttrs.columns, quads[qid - 1].length));
+              setCells(newCells);
+          }
       }
   };
 
   const onClickCellHandler = (pos, qid) => {
       if (!turnState.doRotate && !turnState.selectQuad) {
           const newCells = cells.slice();
-          let newMessage = message;
 
-          if (turnState.goPl1) {
+          if (turnState.goPl1)
               newCells[pos] = {
                   ...cells[pos],
                   style: cellStyleVariants.firstPl
               };
-              newMessage = { text: 'Player 1, choose a quad', color: cellStyleVariants.firstPl.color };
-          } else {
+          else
               newCells[pos] = {
                   ...cells[pos],
                   style: cellStyleVariants.secondPl
               };
-              newMessage = { text: 'Player 2, choose a quad', color: cellStyleVariants.secondPl.color };
+
+          const biggestSequence = longestLine(newCells);
+          if (biggestSequence.length >= 5) {
+              biggestSequence.forEach(cell =>
+                  newCells[newCells.indexOf(cell)].backgroundColor = cellStyleVariants.win);
+              setMessage(turnState.goPl1
+                  ? { text: 'Congratulations! Player 1 wins!', color: cellStyleVariants.win }
+                  : { text: 'Congratulations! Player 2 wins!', color: cellStyleVariants.win });
+              setTurnState({ goPl1: turnState.goPl1, selectQuad: true, doRotate: true });
+          }
+          else {
+              setMessage(turnState.goPl1
+                  ? {text: 'Player 1, choose a quad', color: cellStyleVariants.firstPl.color}
+                  : {text: 'Player 2, choose a quad', color: cellStyleVariants.secondPl.color});
+              setTurnState({ goPl1: !turnState.goPl1, selectQuad: true, doRotate: false });
           }
 
-          setMessage(newMessage);
-          setTurnState({ goPl1: !turnState.goPl1, selectQuad: true, doRotate: false });
           setQuads(cellsToQuadFormat(newCells, attributes.quadAttrs.columns, quads[qid - 1].length));
           setCells(newCells);
       }
   };
 
   const onClickRCTL = (key) => {
-      if (turnState.doRotate) {
+      if (turnState.doRotate && !turnState.selectQuad) {
           if (key.match(/^(counter-clockwise)$/))
               setMessage({text: 'Rotate!\nCounter Clockwise?', color: message.color});
           if (key.match(/^(clockwise)$/))
@@ -161,54 +198,65 @@ function App() {
           .reduce((targetIdx, s, idx) => targetIdx + (s.backgroundColor === '#e4741d' ? idx : 0), 0);
       const newSelectors = selectors.slice();
 
-      if (turnState.selectQuad) {
-          if (key.match(/^(ArrowUp|w)$/)) {
-              newSelectors[currIdx - (currIdx - 2 >= 0 ? 2 : 0)] = {backgroundColor: '#e4741d'};
-              setMessage({ text: `Quad ${currIdx + 1 - (currIdx - 2 >= 0 ? 2 : 0)}?`, color: message.color });
-              if (currIdx - 2 >= 0)
-                  newSelectors[currIdx] = {backgroundColor: '#00000000'};
-          }
-          if (key.match(/^(ArrowDown|s)$/)) {
-              newSelectors[currIdx + (currIdx + 2 < selectors.length ? 2 : 0)] = {backgroundColor: '#e4741d'};
-              setMessage({ text: `Quad ${currIdx + 1 + (currIdx + 2 < selectors.length ? 2 : 0)}?`, color: message.color });
-              if (currIdx + 2 < selectors.length)
-                  newSelectors[currIdx] = {backgroundColor: '#00000000'};
-          }
-          if (key.match(/^(ArrowLeft|a)$/)) {
-              newSelectors[currIdx - (currIdx !== 2 && currIdx - 1 >= 0 ? 1 : 0)] = {backgroundColor: '#e4741d'};
-              setMessage({ text: `Quad ${currIdx + 1 - (currIdx !== 2 && currIdx - 1 >= 0 ? 1 : 0)}?`, color: message.color });
-              if (currIdx !== 2 && currIdx - 1 >= 0)
-                  newSelectors[currIdx] = {backgroundColor: '#00000000'};
-          }
-          if (key.match(/^(ArrowRight|d)$/)) {
-              newSelectors[currIdx + (currIdx !== 1 && currIdx + 1 < selectors.length ? 1 : 0)] = {backgroundColor: '#e4741d'};
-              setMessage({ text: `Quad ${currIdx + 1 + (currIdx !== 1 && currIdx + 1 < selectors.length ? 1 : 0)}?`, color: message.color });
-              if (currIdx !== 1 && currIdx + 1 < selectors.length)
-                  newSelectors[currIdx] = {backgroundColor: '#00000000'};
-          }
-          if (key.match(/^(Enter)$/)) {
-              setTurnState({goPl1: turnState.goPl1, selectQuad: false, doRotate: true});
-              setMessage({ text: 'Rotate! Choose a direction', color: message.color });
-          }
-          setSelectors(newSelectors);
-      }
-      if (turnState.doRotate) {
-          console.log(currIdx);
-          if (key.match(/^(ArrowLeft|a)$/))
-              setMessage({ text: 'Rotate!\nCounter Clockwise?', color: message.color });
-          if (key.match(/^(ArrowRight|d)$/))
-              setMessage({ text: 'Rotate!\nClockwise?', color: message.color });
-          if (key.match(/^(Enter)$/)) {
-              const newCells = rotateQuad(callbackQuads[currIdx], !message.text.match(/(Counter Clockwise\?)$/));
-              newSelectors[currIdx].backgroundColor = '#00000000';
-
+      if (!turnState.selectQuad || !turnState.doRotate) {
+          if (turnState.selectQuad) {
+              if (key.match(/^(ArrowUp|w)$/)) {
+                  newSelectors[currIdx - (currIdx - 2 >= 0 ? 2 : 0)] = {backgroundColor: '#e4741d'};
+                  setMessage({text: `Quad ${currIdx + 1 - (currIdx - 2 >= 0 ? 2 : 0)}?`, color: message.color});
+                  if (currIdx - 2 >= 0)
+                      newSelectors[currIdx] = {backgroundColor: '#00000000'};
+              }
+              if (key.match(/^(ArrowDown|s)$/)) {
+                  newSelectors[currIdx + (currIdx + 2 < selectors.length ? 2 : 0)] = {backgroundColor: '#e4741d'};
+                  setMessage({
+                      text: `Quad ${currIdx + 1 + (currIdx + 2 < selectors.length ? 2 : 0)}?`,
+                      color: message.color
+                  });
+                  if (currIdx + 2 < selectors.length)
+                      newSelectors[currIdx] = {backgroundColor: '#00000000'};
+              }
+              if (key.match(/^(ArrowLeft|a)$/)) {
+                  newSelectors[currIdx - (currIdx !== 2 && currIdx - 1 >= 0 ? 1 : 0)] = {backgroundColor: '#e4741d'};
+                  setMessage({
+                      text: `Quad ${currIdx + 1 - (currIdx !== 2 && currIdx - 1 >= 0 ? 1 : 0)}?`,
+                      color: message.color
+                  });
+                  if (currIdx !== 2 && currIdx - 1 >= 0)
+                      newSelectors[currIdx] = {backgroundColor: '#00000000'};
+              }
+              if (key.match(/^(ArrowRight|d)$/)) {
+                  newSelectors[currIdx + (currIdx !== 1 && currIdx + 1 < selectors.length ? 1 : 0)] = {backgroundColor: '#e4741d'};
+                  setMessage({
+                      text: `Quad ${currIdx + 1 + (currIdx !== 1 && currIdx + 1 < selectors.length ? 1 : 0)}?`,
+                      color: message.color
+                  });
+                  if (currIdx !== 1 && currIdx + 1 < selectors.length)
+                      newSelectors[currIdx] = {backgroundColor: '#00000000'};
+              }
+              if (key.match(/^(Enter)$/)) {
+                  setTurnState({goPl1: turnState.goPl1, selectQuad: false, doRotate: true});
+                  setMessage({text: 'Rotate! Choose a direction', color: message.color});
+              }
               setSelectors(newSelectors);
-              setMessage(turnState.goPl1
-                  ? { text: 'Player 1\'s turn!', color: cellStyleVariants.firstPl.color }
-                  : { text: 'Player 2\'s turn!', color: cellStyleVariants.secondPl.color });
-              setTurnState({ goPl1: turnState.goPl1, selectQuad: false, doRotate: false });
-              setQuads(cellsToQuadFormat(newCells, attributes.quadAttrs.columns, callbackQuads[currIdx].length));
-              setCells(newCells);
+          }
+          if (turnState.doRotate) {
+              console.log(currIdx);
+              if (key.match(/^(ArrowLeft|a)$/))
+                  setMessage({text: 'Rotate!\nCounter Clockwise?', color: message.color});
+              if (key.match(/^(ArrowRight|d)$/))
+                  setMessage({text: 'Rotate!\nClockwise?', color: message.color});
+              if (key.match(/^(Enter)$/)) {
+                  const newCells = rotateQuad(callbackQuads[currIdx], !message.text.match(/(Counter Clockwise\?)$/));
+                  newSelectors[currIdx].backgroundColor = '#00000000';
+
+                  setSelectors(newSelectors);
+                  setMessage(turnState.goPl1
+                      ? {text: 'Player 1\'s turn!', color: cellStyleVariants.firstPl.color}
+                      : {text: 'Player 2\'s turn!', color: cellStyleVariants.secondPl.color});
+                  setTurnState({goPl1: turnState.goPl1, selectQuad: false, doRotate: false});
+                  setQuads(cellsToQuadFormat(newCells, attributes.quadAttrs.columns, callbackQuads[currIdx].length));
+                  setCells(newCells);
+              }
           }
       }
   };
