@@ -8,26 +8,28 @@ import {RotateCtl} from "./comp/RotateCtl";
 
 function App() {
 
-    const longestLine = cells => cells.reduce((longest, cell, idx, array) => {
+    const longestLine = cells => cells.reduce((longest, cell, idx) => {
         if (longest.length < 5) {
             const [up, down, left, right] = [-1 * arrayDims.x,
                                                       arrayDims.x,
                                                       -1, 1];
-            const withinBounds = (index, diff) => index >= 0 && index < array.length
+            const withinBounds = (index, diff) => index >= 0 && index < cells.length
                 ? index : index + diff;
             const sequence = [ cell ];
 
             for (let i = withinBounds(idx + up, -1 * up); i <= withinBounds(idx + down, -1 * down); i += down) {
                 for (let j = withinBounds(i + left, -1 * left); j <= withinBounds(i + right, -1 * right); j += right) {
-                    let dir = 0;
-                    while (cells[withinBounds(j + dir, -1 * dir)].backgroundColor === sequence[sequence.length - 1].backgroundColor
+                    if (longest.length < 5 && cell.style !== cellStyleVariants.empty) {
+                        let dir = 0;
+                        while (cells[withinBounds(j + dir, -1 * dir)].style === sequence[sequence.length - 1].style
                         && cells[withinBounds(j + dir, -1 * dir)].cid !== sequence[sequence.length - 1].cid
                         && sequence.length < 5) {
-                        sequence.push(cells[j + dir]);
-                        dir += j - idx;
+                            sequence.push(cells[j + dir]);
+                            dir += j - idx;
+                        }
+                        if (longest.length < sequence.length)
+                            longest = sequence;
                     }
-                    if (longest.length < sequence.length)
-                        longest = sequence;
                 }
             }
             return longest;
@@ -164,8 +166,7 @@ function App() {
 
           const biggestSequence = longestLine(newCells);
           if (biggestSequence.length >= 5) {
-              biggestSequence.forEach(cell =>
-                  newCells[newCells.indexOf(cell)].backgroundColor = cellStyleVariants.win);
+              biggestSequence.map(cell => ({ ...cell, style: cellStyleVariants.win }));
               setMessage(turnState.goPl1
                   ? { text: 'Congratulations! Player 1 wins!', color: cellStyleVariants.win.backgroundColor }
                   : { text: 'Congratulations! Player 2 wins!', color: cellStyleVariants.win.backgroundColor });
