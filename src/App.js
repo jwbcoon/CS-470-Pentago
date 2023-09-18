@@ -167,8 +167,8 @@ function App() {
               biggestSequence.forEach(cell =>
                   newCells[newCells.indexOf(cell)].backgroundColor = cellStyleVariants.win);
               setMessage(turnState.goPl1
-                  ? { text: 'Congratulations! Player 1 wins!', color: cellStyleVariants.win }
-                  : { text: 'Congratulations! Player 2 wins!', color: cellStyleVariants.win });
+                  ? { text: 'Congratulations! Player 1 wins!', color: cellStyleVariants.win.backgroundColor }
+                  : { text: 'Congratulations! Player 2 wins!', color: cellStyleVariants.win.backgroundColor });
               setTurnState({ goPl1: turnState.goPl1, selectQuad: true, doRotate: true });
           }
           else {
