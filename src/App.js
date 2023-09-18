@@ -45,11 +45,11 @@ function App() {
                 startY: (idx) => attributes.quadAttrs.columns - Math.floor(idx / attributes.quadAttrs.columns) - 2,
                 endX: (idx) => (clockwise ? -1 : 1) * (attributes.quadAttrs.columns - Math.floor(idx / attributes.quadAttrs.columns) - 2),
                 endY: (idx) => (clockwise ? 1 : -1) * (idx % attributes.quadAttrs.columns - 1),
-                idx: idx
+                ogIdx: idx
             })
         );
-        coordinates.map(xyPair => quadCells.reduce((endCell, currCell, idx) =>
-            (xyPair.startX(xyPair.idx) === xyPair.endX(idx) && xyPair.startY(xyPair.idx) === xyPair.endY(idx))
+        coordinates.map(xyPath => quadCells.reduce((endCell, currCell, endIdx) =>
+            (xyPath.startX(xyPath.ogIdx) === xyPath.endX(endIdx) && xyPath.startY(xyPath.ogIdx) === xyPath.endY(endIdx))
                 ? currCell //add currCell on true, should happen once
                 : endCell //accumulate nothing on false
         )).forEach((cell, idx) => { //swap each cell from its start location with the cell of its end location
