@@ -41,7 +41,6 @@ const Quad = props => {
                         >
                             <Box sx={{ ...cell, ...cell.style }}
                                  onClick={() => onClickCellHandler(cell.pos, cell.qid)}>
-                                {`cid: ${cell.cid}`}
                             </Box>
                         </Grid>
                     )
@@ -75,7 +74,8 @@ const Board = props => {
                                       p: 1
                                   }}
                             >
-                                <Container sx={{ backgroundColor: selectors[idx].backgroundColor,
+                                <Container justifyContent='center' margin={0}
+                                           sx={{ backgroundColor: selectors[idx].backgroundColor,
                                                  padding: 1 }}>
                                     <Quad attrs={attrs}
                                           cells={quadCells}

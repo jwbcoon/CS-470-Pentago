@@ -164,25 +164,25 @@ function App() {
       if (turnState.selectQuad) {
           if (key.match(/^(ArrowUp|w)$/)) {
               newSelectors[currIdx - (currIdx - 2 >= 0 ? 2 : 0)] = {backgroundColor: '#e4741d'};
-              setMessage({ text: `Quad ${currIdx + 1}?`, color: message.color });
+              setMessage({ text: `Quad ${currIdx + 1 - (currIdx - 2 >= 0 ? 2 : 0)}?`, color: message.color });
               if (currIdx - 2 >= 0)
                   newSelectors[currIdx] = {backgroundColor: '#00000000'};
           }
           if (key.match(/^(ArrowDown|s)$/)) {
               newSelectors[currIdx + (currIdx + 2 < selectors.length ? 2 : 0)] = {backgroundColor: '#e4741d'};
-              setMessage({ text: `Quad ${currIdx + 1}?`, color: message.color });
+              setMessage({ text: `Quad ${currIdx + 1 + (currIdx + 2 < selectors.length ? 2 : 0)}?`, color: message.color });
               if (currIdx + 2 < selectors.length)
                   newSelectors[currIdx] = {backgroundColor: '#00000000'};
           }
           if (key.match(/^(ArrowLeft|a)$/)) {
               newSelectors[currIdx - (currIdx !== 2 && currIdx - 1 >= 0 ? 1 : 0)] = {backgroundColor: '#e4741d'};
-              setMessage({ text: `Quad ${currIdx + 1}?`, color: message.color });
+              setMessage({ text: `Quad ${currIdx + 1 - (currIdx !== 2 && currIdx - 1 >= 0 ? 1 : 0)}?`, color: message.color });
               if (currIdx !== 2 && currIdx - 1 >= 0)
                   newSelectors[currIdx] = {backgroundColor: '#00000000'};
           }
           if (key.match(/^(ArrowRight|d)$/)) {
               newSelectors[currIdx + (currIdx !== 1 && currIdx + 1 < selectors.length ? 1 : 0)] = {backgroundColor: '#e4741d'};
-              setMessage({ text: `Quad ${currIdx + 1}?`, color: message.color });
+              setMessage({ text: `Quad ${currIdx + 1 + (currIdx !== 1 && currIdx + 1 < selectors.length ? 1 : 0)}?`, color: message.color });
               if (currIdx !== 1 && currIdx + 1 < selectors.length)
                   newSelectors[currIdx] = {backgroundColor: '#00000000'};
           }
