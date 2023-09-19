@@ -162,7 +162,7 @@ function App() {
                       && cell.backgroundColor !== cellStyleVariants.empty
                           ? cell.pos : 0), 0);
 
-          if (cells.find(cell =>
+          if (!cells.find(cell =>
                 cell.style === (turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl))) {
               const start = Math.floor(Math.random() * cells.length);
               newCells[start] = {
