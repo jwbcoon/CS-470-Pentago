@@ -58,11 +58,8 @@ function App() {
             const [temp, tempIdx] = [newCells[cell.pos], newCells.indexOf(quadCells[idx])];
             newCells[cell.pos] = quadCells[idx];
             newCells[tempIdx] = temp;
-
-            // update the pos variable to persist index position across rotations
-            newCells[tempIdx].pos = cell.pos;
-            newCells[cell.pos].pos = tempIdx;
         });
+        // update the pos variable to persist index position across rotations
         return newCells.map(cell => { cell.pos = newCells.indexOf(cell); return cell; });
     }
 
