@@ -29,12 +29,8 @@ function App() {
             const [temp, tempIdx] = [newCells[cell.pos], newCells.indexOf(quadCells[idx])];
             newCells[cell.pos] = quadCells[idx];
             newCells[tempIdx] = temp;
-
-            // update the pos variable to persist index position across rotations
-            newCells[tempIdx].pos = cell.pos;
-            newCells[cell.pos].pos = tempIdx;
         });
-        return newCells;
+        return newCells.map(cell => { cell.pos = newCells.indexOf(cell); return cell; });
     }
 
     const cellsToQuadFormat = (cells, columns, rowLength) => { //returns an array of 4 3x3 cell quads
@@ -44,14 +40,10 @@ function App() {
           ...cells.slice(nwest + 2 * cellsWidth, neast + 2 * cellsWidth + 1)
       ];
       return [
-          cellSlicer(cells, 0, columns - 1, rowLength)
-              .map(cell => { cell.pos = cells.indexOf(cell); return cell; }), //northwest section
-          cellSlicer(cells, columns, rowLength - 1, rowLength)
-              .map(cell => { cell.pos = cells.indexOf(cell); return cell; }), //northeast section
-          cellSlicer(cells, columns * rowLength, columns * rowLength + columns - 1, rowLength)
-              .map(cell => { cell.pos = cells.indexOf(cell); return cell; }), //southwest section
-          cellSlicer(cells, columns * rowLength + columns, columns * rowLength + rowLength - 1, rowLength)
-              .map(cell => { cell.pos = cells.indexOf(cell); return cell; }) //southeast section
+          cellSlicer(cells, 0, columns - 1, rowLength), //northwest section
+          cellSlicer(cells, columns, rowLength - 1, rowLength), //northeast section
+          cellSlicer(cells, columns * rowLength, columns * rowLength + columns - 1, rowLength), //southwest section
+          cellSlicer(cells, columns * rowLength + columns, columns * rowLength + rowLength - 1, rowLength) //southeast section
       ]
     }
 
