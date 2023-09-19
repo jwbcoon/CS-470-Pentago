@@ -72,12 +72,18 @@ const Board = props => {
                                   sx={{
                                       m: 0,
                                       p: 1
+
                                   }}
                             >
-                                <Container margin='auto'
-                                           sx={{ justifyContent: 'center',
-                                                 backgroundColor: selectors[idx].backgroundColor,
-                                                 padding: 1 }}>
+                                <Container sx={{
+                                               justifyContent: 'center',
+                                               alignItems: 'center',
+                                               margin: 'auto',
+                                               backgroundColor: selectors[idx].backgroundColor,
+                                               paddingBottom: 1, paddingRight: 0, paddingTop: 0.6,
+                                               width: 290,
+                                               height: 260
+                                           }}>
                                     <Quad attrs={attrs}
                                           cells={quadCells}
                                           onClickQuadHandler={handlers.onClickQuadHandler}
