@@ -158,7 +158,7 @@ function App() {
           const selectIdx = callbackQuads.flat()
               .reduce((targetIdx, cell, idx) =>
                   targetIdx + (cell.cid < 0
-                      && cells[selectIdx].qid === qid
+                      && cells[idx].qid === qid
                       && cell.backgroundColor !== cellStyleVariants.empty
                           ? cell.pos : 0), 0);
 
