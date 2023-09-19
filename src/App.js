@@ -157,92 +157,59 @@ function App() {
           const newCells = cells.slice();
           const selectIdx = callbackQuads.flat()
               .reduce((targetIdx, cell, idx) =>
-                  targetIdx + (cell.cid < 0 && cell.backgroundColor !== cellStyleVariants.empty ? cell.pos : 0), 0);
+                  targetIdx + (cell.cid < 0
+                      && cells[selectIdx].qid === qid
+                      && cell.backgroundColor !== cellStyleVariants.empty
+                          ? cell.pos : 0), 0);
 
           if (!cells.includes({ ...cellAttrs, style: cellStyleVariants.firstPl })) {
               const start = Math.floor(Math.random() * cells.length);
-              if (cells[start].qid === qid) {
-                  newCells[start] = {
-                      ...cellAttrs,
-                      style: cellStyleVariants.firstPl,
-                      cid: -1 * cells[start].cid,
-                      qid: qid,
-                      pos: start
-                  };
-                  setCells(newCells);
-              }
+              newCells[start] = {
+                  ...cells[start],
+                  style: cellStyleVariants.firstPl
+              };
+              setCells(newCells);
           }
-          if (cells[selectIdx].qid === qid) {
+          else {
               if (key.match(/^(ArrowUp|w)$/)) {
                   newCells[selectIdx - (selectIdx - arrayDims.x >= 0 ? arrayDims.x : 0)] = {
-                      ...cellAttrs,
-                      style: cellStyleVariants.firstPl,
-                      cid: -1 * cells[selectIdx - (selectIdx - arrayDims.x >= 0 ? arrayDims.x : 0)].cid,
-                      qid: qid,
-                      pos: selectIdx - (selectIdx - arrayDims.x >= 0 ? arrayDims.x : 0)
+                      ...cells[selectIdx - (selectIdx - arrayDims.x >= 0 ? arrayDims.x : 0)],
+                      style: turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl
                   };
                   if (selectIdx - arrayDims.x >= 0)
-                      newCells[selectIdx] = {
-                          ...cellAttrs,
-                          style: cellStyleVariants.empty,
-                          cid: -1 * cells[selectIdx].cid,
-                          qid: qid,
-                          pos: selectIdx
-                      }
+                      newCells[selectIdx] = { ...cells[selectIdx], style: cellStyleVariants.empty }
               }
               if (key.match(/^(ArrowDown|s)$/)) {
                   newCells[selectIdx + (selectIdx + arrayDims.x >= 0 ? arrayDims.x : 0)] = {
-                      ...cellAttrs,
-                      style: cellStyleVariants.firstPl,
-                      cid: -1 * cells[selectIdx + (selectIdx + arrayDims.x >= 0 ? arrayDims.x : 0)].cid,
-                      qid: qid,
-                      pos: selectIdx + (selectIdx + arrayDims.x >= 0 ? arrayDims.x : 0)
+                      ...cells[selectIdx + (selectIdx + arrayDims.x >= 0 ? arrayDims.x : 0)],
+                      style: turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl
                   };
                   if (selectIdx + arrayDims.x >= 0)
-                      newCells[selectIdx] = {
-                          ...cellAttrs,
-                          style: cellStyleVariants.empty,
-                          cid: -1 * cells[selectIdx].cid,
-                          qid: qid,
-                          pos: selectIdx
-                      }
+                      newCells[selectIdx] = { ...cells[selectIdx], style: cellStyleVariants.empty }
               }
               if (key.match(/^(ArrowLeft|a)$/)) {
                   newCells[selectIdx - (selectIdx % cells.length !== 0 && selectIdx - 1 >= 0 ? 1 : 0)] = {
-                      ...cellAttrs,
-                      style: cellStyleVariants.firstPl,
-                      cid: -1 * cells[selectIdx - (selectIdx % cells.length !== 0 && selectIdx - 1 >= 0 ? 1 : 0)].cid,
-                      qid: qid,
-                      pos: selectIdx - (selectIdx % cells.length !== 0 && selectIdx - 1 >= 0 ? 1 : 0)
+                      ...cells[selectIdx - (selectIdx % cells.length !== 0 && selectIdx - 1 >= 0 ? 1 : 0)],
+                      style: turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl
                   };
                   if (selectIdx % cells.length !== 0 && selectIdx - 1 >= 0) //if the index is not currently on a left wall
-                      newCells[selectIdx] = {
-                          ...cellAttrs,
-                          style: cellStyleVariants.empty,
-                          cid: -1 * cells[selectIdx].cid,
-                          qid: qid,
-                          pos: selectIdx
-                      }
+                      newCells[selectIdx] = { ...cells[selectIdx], style: cellStyleVariants.empty }
               }
               if (key.match(/^(ArrowRight|d)$/)) {
                   newCells[selectIdx + ((selectIdx + 1) % cells.length !== 0 && selectIdx + 1 < cells.length ? 1 : 0)] = {
-                      ...cellAttrs,
-                      style: cellStyleVariants.firstPl,
-                      cid: -1 * cells[selectIdx + ((selectIdx + 1) % cells.length !== 0 && selectIdx + 1 < cells.length ? 1 : 0)].cid,
-                      qid: qid,
-                      pos: selectIdx + ((selectIdx + 1) % cells.length !== 0 && selectIdx + 1 < cells.length ? 1 : 0)
+                      ...cells[selectIdx + ((selectIdx + 1) % cells.length !== 0 && selectIdx + 1 < cells.length ? 1 : 0)],
+                      style: turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl
                   };
-                  if ((selectIdx + 1) % cells.length !== 0 && selectIdx + 1 < cells.length) //if the indes is not currently on a right wall
-                      newCells[selectIdx] = {
-                          ...cellAttrs,
-                          style: cellStyleVariants.empty,
-                          cid: -1 * cells[selectIdx].cid,
-                          qid: qid,
-                          pos: selectIdx
-                      }
+                  if ((selectIdx + 1) % cells.length !== 0 && selectIdx + 1 < cells.length) //if the index is not currently on a right wall
+                      newCells[selectIdx] = { ...cells[selectIdx], style: cellStyleVariants.empty }
               }
           }
           if (key.match(/^(Enter)$/)) {
+              newCells[selectIdx] = {
+                  ...cells[selectIdx],
+                  style: turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl,
+                  cid: -1 * cells[selectIdx].cid
+              }
               setTurnState({goPl1: turnState.goPl1, selectQuad: true, doRotate: false});
               setMessage(turnState.goPl1
                   ? {text: 'Player 1, choose a quad', color: message.color}
