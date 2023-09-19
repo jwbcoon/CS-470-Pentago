@@ -15,16 +15,16 @@ function App() {
                                                       -1, 1];
             const withinBounds = (index, diff) => index >= 0 && index < cells.length
                 ? index : index + diff;
-            const sequence = [ cell ];
 
             for (let i = withinBounds(idx + up, -1 * up); i <= withinBounds(idx + down, -1 * down); i += down) {
                 for (let j = withinBounds(i + left, -1 * left); j <= withinBounds(i + right, -1 * right); j += right) {
-                    if (longest.length < 5 && cell.style !== cellStyleVariants.empty) {
+                    if (longest.length < 5 && cell.style !== cellStyleVariants.empty && cells[j] !== cell) {
+                        const sequence = [ cell ];
                         let dir = 0;
                         while (cells[withinBounds(j + dir, -1 * dir)].style === sequence[sequence.length - 1].style
-                        && cells[withinBounds(j + dir, -1 * dir)].cid !== sequence[sequence.length - 1].cid
+                        && cells[withinBounds(j + dir, -1 * dir)].pos !== sequence[sequence.length - 1].pos
                         && sequence.length < 5) {
-                            sequence.push(cells[j + dir]);
+                            sequence.push(cells[withinBounds(j + dir, -1 * dir)]);
                             dir += j - idx;
                         }
                         if (longest.length < sequence.length)
@@ -104,7 +104,7 @@ function App() {
 
   const [message, setMessage] = useState({ // message displayed in MessageCenter
       text: 'Welcome to Pentago! It is Player 1\'s turn',
-      color: cellStyleVariants.win.color
+      color: cellStyleVariants.win.backgroundColor
   });
   const [turnState, setTurnState] = useState({ // set of bools defining the state of the game
       goPl1: true,
@@ -128,16 +128,18 @@ function App() {
                       : {backgroundColor: '#00000000'});
                   setMessage({text: `Quad ${qid}?`, color: message.color});
                   setSelectors(newSelectors);
-              } else {
+              }
+              else {
                   setTurnState({goPl1: turnState.goPl1, selectQuad: false, doRotate: true});
                   setMessage({text: 'Rotate! Choose a direction', color: message.color});
               }
-          } else if (turnState.doRotate) {
+          }
+          else if (turnState.doRotate) {
               const newCells = rotateQuad(quadCells, !message.text.match(/(Counter Clockwise\?)$/));
               const newSelectors = selectors.slice();
               const newMessage = turnState.goPl1
-                  ? {text: 'Player 1\'s turn!', color: cellStyleVariants.firstPl.color}
-                  : {text: 'Player 2\'s turn!', color: cellStyleVariants.secondPl.color};
+                  ? {text: 'Player 1\'s turn!', color: cellStyleVariants.firstPl.backgroundColor}
+                  : {text: 'Player 2\'s turn!', color: cellStyleVariants.secondPl.backgroundColor};
               newSelectors[qid - 1].backgroundColor = '#00000000';
 
               setTurnState({goPl1: turnState.goPl1, selectQuad: false, doRotate: false});
@@ -152,21 +154,20 @@ function App() {
   const onClickCellHandler = (pos, qid) => {
       if (!turnState.doRotate && !turnState.selectQuad) {
           const newCells = cells.slice();
-
-          if (turnState.goPl1)
-              newCells[pos] = {
-                  ...cells[pos],
-                  style: cellStyleVariants.firstPl
-              };
-          else
-              newCells[pos] = {
-                  ...cells[pos],
-                  style: cellStyleVariants.secondPl
-              };
+          newCells[pos].style = turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl;
 
           const biggestSequence = longestLine(newCells);
-          if (biggestSequence.length >= 5) {
-              biggestSequence.map(cell => ({ ...cell, style: cellStyleVariants.win }));
+          if (biggestSequence.length === 5) {
+              const bigSeqCids = biggestSequence.map(winCell => winCell.cid);
+              const highlightCells = newCells
+                  .filter(cell => bigSeqCids.includes(cell.cid));
+
+              newCells.forEach(cell => {
+                  const hlCellIdx = highlightCells.indexOf(cell);
+                  if (hlCellIdx >= 0)
+                      newCells[highlightCells[hlCellIdx].pos].style = cellStyleVariants.win;
+              })
+
               setMessage(turnState.goPl1
                   ? { text: 'Congratulations! Player 1 wins!', color: cellStyleVariants.win.backgroundColor }
                   : { text: 'Congratulations! Player 2 wins!', color: cellStyleVariants.win.backgroundColor });
@@ -174,8 +175,8 @@ function App() {
           }
           else {
               setMessage(turnState.goPl1
-                  ? {text: 'Player 1, choose a quad', color: cellStyleVariants.firstPl.color}
-                  : {text: 'Player 2, choose a quad', color: cellStyleVariants.secondPl.color});
+                  ? {text: 'Player 1, choose a quad', color: cellStyleVariants.firstPl.backgroundColor}
+                  : {text: 'Player 2, choose a quad', color: cellStyleVariants.secondPl.backgroundColor});
               setTurnState({ goPl1: !turnState.goPl1, selectQuad: true, doRotate: false });
           }
 
@@ -252,8 +253,8 @@ function App() {
 
                   setSelectors(newSelectors);
                   setMessage(turnState.goPl1
-                      ? {text: 'Player 1\'s turn!', color: cellStyleVariants.firstPl.color}
-                      : {text: 'Player 2\'s turn!', color: cellStyleVariants.secondPl.color});
+                      ? {text: 'Player 1\'s turn!', color: cellStyleVariants.firstPl.backgroundColor}
+                      : {text: 'Player 2\'s turn!', color: cellStyleVariants.secondPl.backgroundColor});
                   setTurnState({goPl1: turnState.goPl1, selectQuad: false, doRotate: false});
                   setQuads(cellsToQuadFormat(newCells, attributes.quadAttrs.columns, callbackQuads[currIdx].length));
                   setCells(newCells);
