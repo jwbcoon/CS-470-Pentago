@@ -40,6 +40,12 @@ const cellStyleVariants = {
         backgroundColor: '#3bc270',
             color: '#fafafa',
             borderColor: '#3bc270'
+    },
+    invalid: {
+        backgroundColor: '#F60707B5',
+            color: '#fafafa',
+            borderColor: '#F60707B5',
+        styleMemory: '#F60707B5'
     }
 }
 

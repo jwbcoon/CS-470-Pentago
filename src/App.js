@@ -40,7 +40,6 @@ function App() {
 
     const rotateQuad = (quadCells, clockwise = true) => {
         const newCells = cells.slice();
-        console.log(`Rotating quad ${quadCells[0].qid} ${clockwise ? 'clockwise' : 'counter clockwise'}`);
 
         // array of coordinates associated with the quadCells such that the center element is the origin (0, 0)
         const coordinates = quadCells.map((cell, idx) => ({
@@ -113,8 +112,8 @@ function App() {
       }
       else if (state !== turnState.doRotate) {
           setMessage(turnState.goPl1
-              ? {text: 'Player 1, choose a quad', color: cellStyleVariants.firstPl.backgroundColor}
-              : {text: 'Player 2, choose a quad', color: cellStyleVariants.secondPl.backgroundColor});
+              ? { text: 'Player 1, choose a quad', color: cellStyleVariants.firstPl.backgroundColor }
+              : { text: 'Player 2, choose a quad', color: cellStyleVariants.secondPl.backgroundColor });
           setTurnState({ goPl1: turnState.goPl1, selectQuad: true, doRotate: false });
       }
       else {
@@ -145,8 +144,8 @@ function App() {
             if (turnState.selectQuad) {
                 if (selectors[qid - 1].backgroundColor === '#00000000') {
                     const newSelectors = selectors.map((selector, idx) => idx === qid - 1
-                        ? {backgroundColor: '#e4741d'}
-                        : {backgroundColor: '#00000000'});
+                        ? { backgroundColor: '#e4741d' }
+                        : { backgroundColor: '#00000000' });
                     setMessage({text: `Quad ${qid}?`, color: message.color});
                     setSelectors(newSelectors);
                 }
@@ -213,26 +212,50 @@ function App() {
                 setCells(newCells);
             }
             else {
-                if (key.match(/^(ArrowUp|w)$/)
-                    && newCells[selectCell.pos - (selectCell.pos - arrayDims.x >= 0 ? arrayDims.x : 0)].style === cellStyleVariants.empty) {
-                    newCells[selectCell.pos - (selectCell.pos - arrayDims.x >= 0 ? arrayDims.x : 0)] = {
-                        ...newCells[selectCell.pos - (selectCell.pos - arrayDims.x >= 0 ? arrayDims.x : 0)],
-                        style: turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl
-                    };
-                    if (selectCell.pos - arrayDims.x >= 0)
+                if (key.match(/^(ArrowUp|w)$/)) {
+                    if (newCells[selectCell.pos - (selectCell.pos - arrayDims.x >= 0 ? arrayDims.x : 0)].style === cellStyleVariants.empty) {
+                        newCells[selectCell.pos - (selectCell.pos - arrayDims.x >= 0 ? arrayDims.x : 0)] = {
+                            ...newCells[selectCell.pos - (selectCell.pos - arrayDims.x >= 0 ? arrayDims.x : 0)]
+                                .map(({ styleMemory, ...rest }) => rest), //object destructuring to separate keys from param
+                            style: turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl
+                        };
+                    }
+                    else { // write to arrival cell with the invalid square to pass through, but not play on it.
+                        newCells[selectCell.pos - (selectCell.pos - arrayDims.x >= 0 ? arrayDims.x : 0)] = {
+                            ...newCells[selectCell.pos - (selectCell.pos - arrayDims.x >= 0 ? arrayDims.x : 0)],
+                            style: cellStyleVariants.invalid,
+                            styleMemory: newCells[selectCell.pos - (selectCell.pos - arrayDims.x >= 0 ? arrayDims.x : 0)].style
+                        };
+                    }
+                    if (selectCell.pos - arrayDims.x >= 0) // manage the state of the departing square
                         newCells[selectCell.pos] = selectCell.pos - arrayDims.x >= 0
-                            ? { ...newCells[selectCell.pos], style: cellStyleVariants.empty }
+                            ? { ...newCells[selectCell.pos],
+                                style: newCells[selectCell.pos].style === cellStyleVariants.invalid
+                                    ? newCells[selectCell.pos].styleMemory
+                                    : cellStyleVariants.empty }
                             : newCells[selectCell.pos];
                 }
-                if (key.match(/^(ArrowDown|s)$/)
-                    && newCells[selectCell.pos + (selectCell.pos + arrayDims.x < cells.length ? arrayDims.x : 0)].style === cellStyleVariants.empty) {
-                    newCells[selectCell.pos + (selectCell.pos + arrayDims.x < cells.length ? arrayDims.x : 0)] = {
-                        ...newCells[selectCell.pos + (selectCell.pos + arrayDims.x < cells.length ? arrayDims.x : 0)],
-                        style: turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl
-                    };
-                    if (selectCell.pos + arrayDims.x < cells.length)
+                if (key.match(/^(ArrowDown|s)$/)) {
+                    if (newCells[selectCell.pos + (selectCell.pos + arrayDims.x < cells.length ? arrayDims.x : 0)].style === cellStyleVariants.empty) {
+                        newCells[selectCell.pos + (selectCell.pos + arrayDims.x < cells.length ? arrayDims.x : 0)] = {
+                            newCells[selectCell.pos + (selectCell.pos + arrayDims.x < cells.length ? arrayDims.x : 0)]
+                                .map(({ styleMemory, ...rest }) => rest), //object destructuring to separate keys from param
+                            style: turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl
+                        };
+                    }
+                    else { // write to arrival cell with the invalid square to pass through, but not play on it.
+                        newCells[selectCell.pos + (selectCell.pos + arrayDims.x < cells.length ? arrayDims.x : 0)] = {
+                            ...newCells[selectCell.pos + (selectCell.pos + arrayDims.x < cells.length ? arrayDims.x : 0)],
+                            style: cellStyleVariants.invalid,
+                            styleMemory: newCells[selectCell.pos + (selectCell.pos + arrayDims.x < cells.length ? arrayDims.x : 0)].style
+                        };
+                    }
+                    if (selectCell.pos + arrayDims.x < cells.length) // manage the state of the departing square
                         newCells[selectCell.pos] = selectCell.pos + arrayDims.x < cells.length
-                            ? { ...newCells[selectCell.pos], style: cellStyleVariants.empty }
+                            ? { ...newCells[selectCell.pos],
+                                style: newCells[selectCell.pos].style === cellStyleVariants.invalid
+                                    ? newCells[selectCell.pos].styleMemory
+                                    : cellStyleVariants.empty }
                             : newCells[selectCell.pos];
                 }
                 if (key.match(/^(ArrowLeft|a)$/)
@@ -276,50 +299,50 @@ function App() {
 
             if (turnState.selectQuad && !turnState.doRotate) {
                 if (key.match(/^(ArrowUp|w)$/)) {
-                    newSelectors[currIdx - (currIdx - 2 >= 0 ? 2 : 0)] = {backgroundColor: '#e4741d'};
-                    setMessage({text: `Quad ${currIdx + 1 - (currIdx - 2 >= 0 ? 2 : 0)}?`, color: message.color});
+                    newSelectors[currIdx - (currIdx - 2 >= 0 ? 2 : 0)] = { backgroundColor: '#e4741d' };
+                    setMessage({ text: `Quad ${currIdx + 1 - (currIdx - 2 >= 0 ? 2 : 0) }?`, color: message.color});
                     if (currIdx - 2 >= 0)
-                        newSelectors[currIdx] = {backgroundColor: '#00000000'};
+                        newSelectors[currIdx] = { backgroundColor: '#00000000' };
                 }
                 if (key.match(/^(ArrowDown|s)$/)) {
                     newSelectors[currIdx + (currIdx + 2 < selectors.length ? 2 : 0)] = {backgroundColor: '#e4741d'};
                     setMessage({
-                        text: `Quad ${currIdx + 1 + (currIdx + 2 < selectors.length ? 2 : 0)}?`,
+                        text: `Quad ${ currIdx + 1 + (currIdx + 2 < selectors.length ? 2 : 0) }?`,
                         color: message.color
                     });
                     if (currIdx + 2 < selectors.length)
                         newSelectors[currIdx] = {backgroundColor: '#00000000'};
                 }
                 if (key.match(/^(ArrowLeft|a)$/)) {
-                    newSelectors[currIdx - (currIdx !== 2 && currIdx - 1 >= 0 ? 1 : 0)] = {backgroundColor: '#e4741d'};
+                    newSelectors[currIdx - (currIdx !== 2 && currIdx - 1 >= 0 ? 1 : 0)] = { backgroundColor: '#e4741d' };
                     setMessage({
-                        text: `Quad ${currIdx + 1 - (currIdx !== 2 && currIdx - 1 >= 0 ? 1 : 0)}?`,
+                        text: `Quad ${ currIdx + 1 - (currIdx !== 2 && currIdx - 1 >= 0 ? 1 : 0) }?`,
                         color: message.color
                     });
                     if (currIdx !== 2 && currIdx - 1 >= 0)
                         newSelectors[currIdx] = {backgroundColor: '#00000000'};
                 }
                 if (key.match(/^(ArrowRight|d)$/)) {
-                    newSelectors[currIdx + (currIdx !== 1 && currIdx + 1 < selectors.length ? 1 : 0)] = {backgroundColor: '#e4741d'};
+                    newSelectors[currIdx + (currIdx !== 1 && currIdx + 1 < selectors.length ? 1 : 0)] = { backgroundColor: '#e4741d' };
                     setMessage({
-                        text: `Quad ${currIdx + 1 + (currIdx !== 1 && currIdx + 1 < selectors.length ? 1 : 0)}?`,
+                        text: `Quad ${ currIdx + 1 + (currIdx !== 1 && currIdx + 1 < selectors.length ? 1 : 0) }?`,
                         color: message.color
                     });
                     if (currIdx !== 1 && currIdx + 1 < selectors.length)
                         newSelectors[currIdx] = {backgroundColor: '#00000000'};
                 }
                 if (key.match(/^(Enter)$/)) {
-                    setTurnState({goPl1: turnState.goPl1, selectQuad: false, doRotate: true});
-                    setMessage({text: 'Rotate! Choose a direction', color: message.color});
+                    setTurnState({ goPl1: turnState.goPl1, selectQuad: false, doRotate: true });
+                    setMessage({ text: 'Rotate! Choose a direction', color: message.color });
                 }
                 setSelectors(newSelectors);
             }
             if (turnState.doRotate && !turnState.selectQuad) {
                 console.log(currIdx);
                 if (key.match(/^(ArrowLeft|a)$/))
-                    setMessage({text: 'Rotate!\nCounter Clockwise?', color: message.color});
+                    setMessage({ text: 'Rotate!\nCounter Clockwise?', color: message.color });
                 if (key.match(/^(ArrowRight|d)$/))
-                    setMessage({text: 'Rotate!\nClockwise?', color: message.color});
+                    setMessage({ text: 'Rotate!\nClockwise?', color: message.color });
                 if (key.match(/^(Enter)$/)) {
                     const newCells = rotateQuad(callbackQuads[currIdx], !message.text.match(/(Counter Clockwise\?)$/));
                     newSelectors[currIdx].backgroundColor = '#00000000';
