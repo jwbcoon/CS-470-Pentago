@@ -92,7 +92,7 @@ function App() {
   const initializeQuads = () => cellsToQuadFormat(cells, attributes.quadAttrs.columns,
               attributes.boardAttrs.columns * attributes.quadAttrs.columns);
 
-  const initializeSelectors = () => new Array(4).fill({backgroundColor: '#00000000'});
+  const initializeSelectors = () => new Array(4).fill({ backgroundColor: '#00000000' });
 
   const scanWinState = (newCells, biggestSequence, state) => {
       if (biggestSequence.length === 5) {
@@ -112,6 +112,8 @@ function App() {
           setTurnState({ goPl1: turnState.goPl1, selectQuad: true, doRotate: true });
       }
       else if (state !== turnState.doRotate) {
+          setSelectors(selectors
+              .map((s, idx) => idx + 1 === biggestSequence[0].qid ? ({ ...s, backgroundColor: '#e4741d' }) : s));
           setMessage(turnState.goPl1
               ? {text: 'Player 1, choose a quad', color: cellStyleVariants.firstPl.backgroundColor}
               : {text: 'Player 2, choose a quad', color: cellStyleVariants.secondPl.backgroundColor});
@@ -172,10 +174,14 @@ function App() {
     const onClickCellHandler = (pos, qid) => {
         if (!turnState.doRotate && !turnState.selectQuad) {
             const newCells = cells.slice();
+            const selectCell = newCells.find(cell => cell.cid < 0
+                && cell.style === (turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl));
             if (newCells[pos].style === cellStyleVariants.empty)
                 newCells[pos] = turnState.goPl1
                     ? { ...newCells[pos], style: cellStyleVariants.firstPl, cid: -1 * newCells[pos].cid }
                     : { ...newCells[pos], style: cellStyleVariants.secondPl, cid: -1 * newCells[pos].cid };
+            if (selectCell)
+                newCells[selectCell.pos].style = cellStyleVariants.empty;
 
             scanWinState(newCells, longestLine(newCells), {});
 
