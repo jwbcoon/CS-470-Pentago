@@ -41,6 +41,7 @@ const Quad = props => {
                         >
                             <Box sx={{ ...cell, ...cell.style }}
                                  onClick={() => onClickCellHandler(cell.pos, cell.qid)}>
+                                {cell.cid}
                             </Box>
                         </Grid>
                     )

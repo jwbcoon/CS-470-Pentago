@@ -19,6 +19,7 @@ function App() {
             for (let i = withinBounds(idx + up, -1 * up); i <= withinBounds(idx + down, -1 * down); i += down) {
                 for (let j = withinBounds(i + left, -1 * left); j <= withinBounds(i + right, -1 * right); j += right) {
                     if (longest.length < 5 && cell.style !== cellStyleVariants.empty && cells[j] !== cell) {
+                        console.log(JSON.stringify(longest), JSON.stringify(cell));
                         const sequence = [ cell ];
                         let dir = 0;
                         while (cells[withinBounds(j + dir, -1 * dir)].style === sequence[sequence.length - 1].style
@@ -85,7 +86,7 @@ function App() {
           if (idx.toString().match(/^((21)|(22)|(23)|(27)|(28)|(29)|(33)|(34)|(35))$/)) return 4;
       }
       return new Array(arrayDims.x * arrayDims.y).fill({ ...cellAttrs })
-          .map((cell, idx) => ({ ...cellAttrs, cid: -1 * idx, qid: determineQuad(idx), pos: idx }));
+          .map((cell, idx) => ({ ...cellAttrs, cid: -1 * (idx + 1), qid: determineQuad(idx), pos: idx }));
   };
 
   const initializeQuads = () => cellsToQuadFormat(cells, attributes.quadAttrs.columns,
@@ -93,7 +94,59 @@ function App() {
 
   const initializeSelectors = () => new Array(4).fill({backgroundColor: '#00000000'});
 
+  const scanWinStateOnPlace = newCells => {
+      const biggestSequence = longestLine(newCells);
+      if (biggestSequence.length === 5) {
+          const bigSeqPositions = biggestSequence.map(winCell => winCell.pos);
+          const highlightCells = newCells
+              .filter(cell => bigSeqPositions.includes(cell.pos));
 
+          newCells.forEach(cell => {
+              const hlCellIdx = highlightCells.indexOf(cell);
+              if (hlCellIdx >= 0)
+                  newCells[highlightCells[hlCellIdx].pos].style = cellStyleVariants.win;
+          })
+
+          setMessage(turnState.goPl1
+              ? { text: 'Congratulations! Player 1 wins!', color: cellStyleVariants.win.backgroundColor }
+              : { text: 'Congratulations! Player 2 wins!', color: cellStyleVariants.win.backgroundColor });
+          setTurnState({ goPl1: turnState.goPl1, selectQuad: true, doRotate: true });
+      }
+      else {
+          setMessage(turnState.goPl1
+              ? {text: 'Player 1, choose a quad', color: cellStyleVariants.firstPl.backgroundColor}
+              : {text: 'Player 2, choose a quad', color: cellStyleVariants.secondPl.backgroundColor});
+          setTurnState({ goPl1: turnState.goPl1, selectQuad: true, doRotate: false });
+      }
+      return newCells;
+  }
+
+  const scanWinStateOnRotate = newCells => {
+      const biggestSequence = longestLine(newCells);
+      if (biggestSequence.length === 5) {
+          const bigSeqPositions = biggestSequence.map(winCell => winCell.pos);
+          const highlightCells = newCells
+              .filter(cell => bigSeqPositions.includes(cell.pos));
+
+          newCells.forEach(cell => {
+              const hlCellIdx = highlightCells.indexOf(cell);
+              if (hlCellIdx >= 0)
+                  newCells[highlightCells[hlCellIdx].pos].style = cellStyleVariants.win;
+          })
+
+          setMessage(biggestSequence[0].style === cellStyleVariants.firstPl
+              ? { text: 'Congratulations! Player 1 wins!', color: cellStyleVariants.win.backgroundColor }
+              : { text: 'Congratulations! Player 2 wins!', color: cellStyleVariants.win.backgroundColor });
+          setTurnState({ goPl1: turnState.goPl1, selectQuad: true, doRotate: true });
+      }
+      else {
+          setMessage(turnState.goPl1
+              ? { text: 'Player 2\'s turn!', color: cellStyleVariants.secondPl.backgroundColor }
+              : { text: 'Player 1\'s turn!', color: cellStyleVariants.firstPl.backgroundColor });
+          setTurnState({goPl1: !turnState.goPl1, selectQuad: false, doRotate: false});
+      }
+      return newCells;
+  }
 
   const [message, setMessage] = useState({ // message displayed in MessageCenter
       text: 'Welcome to Pentago! It is Player 1\'s turn',
@@ -111,8 +164,6 @@ function App() {
 
   const onClickQuadHandler = (quadCells, qid) => { //quadCells are an array of 9 objects whose 'cid' key corresponds
                                                     //to the index of that element within the cells array
-      console.log(`Clicked on quad ${qid}!`);
-
       if (!turnState.selectQuad || !turnState.doRotate) {
           if (turnState.selectQuad) {
               if (selectors[qid - 1].backgroundColor === '#00000000') {
@@ -132,29 +183,7 @@ function App() {
               const newSelectors = selectors.slice();
               newSelectors[qid - 1].backgroundColor = '#00000000';
 
-              const biggestSequence = longestLine(newCells);
-              if (biggestSequence.length === 5) {
-                  const bigSeqPositions = biggestSequence.map(winCell => winCell.pos);
-                  const highlightCells = newCells
-                      .filter(cell => bigSeqPositions.includes(cell.pos));
-
-                  newCells.forEach(cell => {
-                      const hlCellIdx = highlightCells.indexOf(cell);
-                      if (hlCellIdx >= 0)
-                          newCells[highlightCells[hlCellIdx].pos].style = cellStyleVariants.win;
-                  })
-
-                  setMessage(newCells[biggestSequence[0].pos].style === cellStyleVariants.firstPl
-                      ? { text: 'Congratulations! Player 1 wins!', color: cellStyleVariants.win.backgroundColor }
-                      : { text: 'Congratulations! Player 2 wins!', color: cellStyleVariants.win.backgroundColor });
-                  setTurnState({ goPl1: turnState.goPl1, selectQuad: true, doRotate: true });
-              }
-              else {
-                  setMessage(turnState.goPl1
-                      ? {text: 'Player 2\'s turn!', color: cellStyleVariants.secondPl.backgroundColor}
-                      : {text: 'Player 1\'s turn!', color: cellStyleVariants.firstPl.backgroundColor});
-                  setTurnState({goPl1: !turnState.goPl1, selectQuad: false, doRotate: false});
-              }
+              scanWinStateOnRotate(newCells);
 
               setSelectors(newSelectors);
               setQuads(cellsToQuadFormat(newCells, attributes.quadAttrs.columns, quads[qid - 1].length));
@@ -171,29 +200,7 @@ function App() {
                 ? { ...newCells[pos], style: cellStyleVariants.firstPl, cid: -1 * newCells[pos].cid }
                 : { ...newCells[pos], style: cellStyleVariants.secondPl, cid: -1 * newCells[pos].cid };
 
-          const biggestSequence = longestLine(newCells);
-          if (biggestSequence.length === 5) {
-              const bigSeqPositions = biggestSequence.map(winCell => winCell.pos);
-              const highlightCells = newCells
-                  .filter(cell => bigSeqPositions.includes(cell.pos));
-
-              newCells.forEach(cell => {
-                  const hlCellIdx = highlightCells.indexOf(cell);
-                  if (hlCellIdx >= 0)
-                      newCells[highlightCells[hlCellIdx].pos].style = cellStyleVariants.win;
-              })
-
-              setMessage(turnState.goPl1
-                  ? { text: 'Congratulations! Player 1 wins!', color: cellStyleVariants.win.backgroundColor }
-                  : { text: 'Congratulations! Player 2 wins!', color: cellStyleVariants.win.backgroundColor });
-              setTurnState({ goPl1: turnState.goPl1, selectQuad: true, doRotate: true });
-          }
-          else {
-              setMessage(turnState.goPl1
-                  ? {text: 'Player 1, choose a quad', color: cellStyleVariants.firstPl.backgroundColor}
-                  : {text: 'Player 2, choose a quad', color: cellStyleVariants.secondPl.backgroundColor});
-              setTurnState({ goPl1: turnState.goPl1, selectQuad: true, doRotate: false });
-          }
+          scanWinStateOnPlace(newCells);
 
           setQuads(cellsToQuadFormat(newCells, attributes.quadAttrs.columns, quads[qid - 1].length));
           setCells(newCells);
@@ -212,26 +219,25 @@ function App() {
   const onKeyDownHandler = (event, callbackQuads) => {
       const key = event.key;
 
-
       if (!turnState.doRotate && !turnState.selectQuad) {
           const newCells = cells.slice();
           const selectCell = callbackQuads.flat()
               .find(cell => cell.cid < 0
                   && cell.style === (turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl));
 
-          const isLeftmostCol = (idx) => (arrayDims.x * arrayDims.y) % idx === 0
-              && (arrayDims.x * arrayDims.y) % Math.floor((idx + 1) / 2) !== 0;
+          const isLeftmostCol = (idx) => idx % arrayDims.y === 0;
 
           if (!selectCell) {
               const start = Math.floor(Math.random() * arrayDims.x * arrayDims.y);
               newCells[start] = {
                   ...newCells[start],
-                  style: cellStyleVariants.firstPl
+                  style: turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl
               };
               setCells(newCells);
           }
           else {
-              if (key.match(/^(ArrowUp|w)$/)) {
+              if (key.match(/^(ArrowUp|w)$/)
+              && newCells[selectCell.pos - (selectCell.pos - arrayDims.x >= 0 ? arrayDims.x : 0)].style === cellStyleVariants.empty) {
                   newCells[selectCell.pos - (selectCell.pos - arrayDims.x >= 0 ? arrayDims.x : 0)] = {
                       ...newCells[selectCell.pos - (selectCell.pos - arrayDims.x >= 0 ? arrayDims.x : 0)],
                       style: turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl
@@ -241,17 +247,19 @@ function App() {
                           ? { ...newCells[selectCell.pos], style: cellStyleVariants.empty }
                           : newCells[selectCell.pos];
               }
-              if (key.match(/^(ArrowDown|s)$/)) {
-                  newCells[selectCell.pos + (selectCell.pos + arrayDims.x >= 0 ? arrayDims.x : 0)] = {
-                      ...newCells[selectCell.pos + (selectCell.pos + arrayDims.x >= 0 ? arrayDims.x : 0)],
+              if (key.match(/^(ArrowDown|s)$/)
+                  && newCells[selectCell.pos + (selectCell.pos + arrayDims.x < cells.length ? arrayDims.x : 0)].style === cellStyleVariants.empty) {
+                  newCells[selectCell.pos + (selectCell.pos + arrayDims.x < cells.length ? arrayDims.x : 0)] = {
+                      ...newCells[selectCell.pos + (selectCell.pos + arrayDims.x < cells.length ? arrayDims.x : 0)],
                       style: turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl
                   };
-                  if (selectCell.pos + arrayDims.x >= 0)
+                  if (selectCell.pos + arrayDims.x < cells.length)
                       newCells[selectCell.pos] = selectCell.pos + arrayDims.x < cells.length
                           ? { ...newCells[selectCell.pos], style: cellStyleVariants.empty }
                           : newCells[selectCell.pos];
               }
-              if (key.match(/^(ArrowLeft|a)$/)) {
+              if (key.match(/^(ArrowLeft|a)$/)
+                  && newCells[selectCell.pos - (!isLeftmostCol(selectCell.pos) && selectCell.pos - 1 >= 0 ? 1 : 0)].style === cellStyleVariants.empty) {
                   newCells[selectCell.pos - (!isLeftmostCol(selectCell.pos) && selectCell.pos - 1 >= 0 ? 1 : 0)] = {
                       ...newCells[selectCell.pos - (!isLeftmostCol(selectCell.pos) && selectCell.pos - 1 >= 0 ? 1 : 0)],
                       style: turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl
@@ -261,7 +269,8 @@ function App() {
                           ? { ...newCells[selectCell.pos], style: cellStyleVariants.empty }
                           : newCells[selectCell.pos];
               }
-              if (key.match(/^(ArrowRight|d)$/)) {
+              if (key.match(/^(ArrowRight|d)$/)
+                  && newCells[selectCell.pos + (!isLeftmostCol(selectCell.pos + 1) && selectCell.pos + 1 < cells.length ? 1 : 0)].style === cellStyleVariants.empty) {
                   newCells[selectCell.pos + (!isLeftmostCol(selectCell.pos + 1) && selectCell.pos + 1 < cells.length ? 1 : 0)] = {
                       ...newCells[selectCell.pos + (!isLeftmostCol(selectCell.pos + 1) && selectCell.pos + 1 < cells.length ? 1 : 0)],
                       style: turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl
@@ -277,10 +286,8 @@ function App() {
                       style: turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl,
                       cid: -1 * newCells[selectCell.pos].cid
                   }
-                  setTurnState({goPl1: turnState.goPl1, selectQuad: true, doRotate: false});
-                  setMessage(turnState.goPl1
-                      ? {text: 'Player 1, choose a quad', color: message.color}
-                      : {text: 'Player 2, choose a quad', color: message.color});
+
+                  scanWinStateOnPlace(newCells);
               }
               setCells(newCells);
           }
@@ -340,29 +347,7 @@ function App() {
                   const newCells = rotateQuad(callbackQuads[currIdx], !message.text.match(/(Counter Clockwise\?)$/));
                   newSelectors[currIdx].backgroundColor = '#00000000';
 
-                  const biggestSequence = longestLine(newCells);
-                  if (biggestSequence.length === 5) {
-                      const bigSeqPositions = biggestSequence.map(winCell => winCell.pos);
-                      const highlightCells = newCells
-                          .filter(cell => bigSeqPositions.includes(cell.pos));
-
-                      newCells.forEach(cell => {
-                          const hlCellIdx = highlightCells.indexOf(cell);
-                          if (hlCellIdx >= 0)
-                              newCells[highlightCells[hlCellIdx].pos].style = cellStyleVariants.win;
-                      })
-
-                      setMessage(biggestSequence[0].style === cellStyleVariants.firstPl
-                          ? { text: 'Congratulations! Player 1 wins!', color: cellStyleVariants.win.backgroundColor }
-                          : { text: 'Congratulations! Player 2 wins!', color: cellStyleVariants.win.backgroundColor });
-                      setTurnState({ goPl1: turnState.goPl1, selectQuad: true, doRotate: true });
-                  }
-                  else {
-                      setMessage(turnState.goPl1
-                          ? {text: 'Player 2\'s turn!', color: cellStyleVariants.secondPl.backgroundColor}
-                          : {text: 'Player 1\'s turn!', color: cellStyleVariants.firstPl.backgroundColor});
-                      setTurnState({goPl1: !turnState.goPl1, selectQuad: false, doRotate: false});
-                  }
+                  scanWinStateOnRotate(newCells);
 
                   setSelectors(newSelectors);
                   setQuads(cellsToQuadFormat(newCells, attributes.quadAttrs.columns, callbackQuads[currIdx].length));
