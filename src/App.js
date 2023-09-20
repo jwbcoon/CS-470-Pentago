@@ -85,7 +85,7 @@ function App() {
           if (idx.toString().match(/^((21)|(22)|(23)|(27)|(28)|(29)|(33)|(34)|(35))$/)) return 4;
       }
       return new Array(arrayDims.x * arrayDims.y).fill({ ...cellAttrs })
-          .map((cell, idx) => ({ ...cellAttrs, cid: idx, qid: determineQuad(idx), pos: idx }));
+          .map((cell, idx) => ({ ...cellAttrs, cid: -1 * idx, qid: determineQuad(idx), pos: idx }));
   };
 
   const initializeQuads = () => cellsToQuadFormat(cells, attributes.quadAttrs.columns,
@@ -166,9 +166,10 @@ function App() {
   const onClickCellHandler = (pos, qid) => {
       if (!turnState.doRotate && !turnState.selectQuad) {
           const newCells = cells.slice();
-          if (newCells[pos].style === cellStyleVariants.empty) {
-              newCells[pos].style = turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl;
-          }
+          if (newCells[pos].style === cellStyleVariants.empty)
+              newCells[pos] = turnState.goPl1
+                ? { ...newCells[pos], style: cellStyleVariants.firstPl, cid: -1 * newCells[pos].cid }
+                : { ...newCells[pos], style: cellStyleVariants.secondPl, cid: -1 * newCells[pos].cid };
 
           const biggestSequence = longestLine(newCells);
           if (biggestSequence.length === 5) {
@@ -210,12 +211,86 @@ function App() {
 
   const onKeyDownHandler = (event, callbackQuads) => {
       const key = event.key;
-      const currIdx = selectors
-          .reduce((targetIdx, s, idx) => targetIdx + (s.backgroundColor === '#e4741d' ? idx : 0), 0);
-      const newSelectors = selectors.slice();
 
-      if (!turnState.selectQuad || !turnState.doRotate) {
-          if (turnState.selectQuad) {
+
+      if (!turnState.doRotate && !turnState.selectQuad) {
+          const newCells = cells.slice();
+          const selectCell = callbackQuads.flat()
+              .find(cell => cell.cid < 0
+                  && cell.style === (turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl));
+
+          const isLeftmostCol = (idx) => (arrayDims.x * arrayDims.y) % idx === 0
+              && (arrayDims.x * arrayDims.y) % Math.floor((idx + 1) / 2) !== 0;
+
+          if (!selectCell) {
+              const start = Math.floor(Math.random() * arrayDims.x * arrayDims.y);
+              newCells[start] = {
+                  ...newCells[start],
+                  style: cellStyleVariants.firstPl
+              };
+              setCells(newCells);
+          }
+          else {
+              if (key.match(/^(ArrowUp|w)$/)) {
+                  newCells[selectCell.pos - (selectCell.pos - arrayDims.x >= 0 ? arrayDims.x : 0)] = {
+                      ...newCells[selectCell.pos - (selectCell.pos - arrayDims.x >= 0 ? arrayDims.x : 0)],
+                      style: turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl
+                  };
+                  if (selectCell.pos - arrayDims.x >= 0)
+                      newCells[selectCell.pos] = selectCell.pos - arrayDims.x >= 0
+                          ? { ...newCells[selectCell.pos], style: cellStyleVariants.empty }
+                          : newCells[selectCell.pos];
+              }
+              if (key.match(/^(ArrowDown|s)$/)) {
+                  newCells[selectCell.pos + (selectCell.pos + arrayDims.x >= 0 ? arrayDims.x : 0)] = {
+                      ...newCells[selectCell.pos + (selectCell.pos + arrayDims.x >= 0 ? arrayDims.x : 0)],
+                      style: turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl
+                  };
+                  if (selectCell.pos + arrayDims.x >= 0)
+                      newCells[selectCell.pos] = selectCell.pos + arrayDims.x < cells.length
+                          ? { ...newCells[selectCell.pos], style: cellStyleVariants.empty }
+                          : newCells[selectCell.pos];
+              }
+              if (key.match(/^(ArrowLeft|a)$/)) {
+                  newCells[selectCell.pos - (!isLeftmostCol(selectCell.pos) && selectCell.pos - 1 >= 0 ? 1 : 0)] = {
+                      ...newCells[selectCell.pos - (!isLeftmostCol(selectCell.pos) && selectCell.pos - 1 >= 0 ? 1 : 0)],
+                      style: turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl
+                  };
+                  if (selectCell.pos - 1 >= 0)
+                      newCells[selectCell.pos] = !isLeftmostCol(selectCell.pos)
+                          ? { ...newCells[selectCell.pos], style: cellStyleVariants.empty }
+                          : newCells[selectCell.pos];
+              }
+              if (key.match(/^(ArrowRight|d)$/)) {
+                  newCells[selectCell.pos + (!isLeftmostCol(selectCell.pos + 1) && selectCell.pos + 1 < cells.length ? 1 : 0)] = {
+                      ...newCells[selectCell.pos + (!isLeftmostCol(selectCell.pos + 1) && selectCell.pos + 1 < cells.length ? 1 : 0)],
+                      style: turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl
+                  };
+                  if (selectCell.pos + 1 < cells.length)
+                      newCells[selectCell.pos] = !isLeftmostCol(selectCell.pos + 1)
+                          ? { ...newCells[selectCell.pos], style: cellStyleVariants.empty }
+                          : newCells[selectCell.pos];
+              }
+              if (key.match(/^(Enter)$/)) {
+                  newCells[selectCell.pos] = {
+                      ...newCells[selectCell.pos],
+                      style: turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl,
+                      cid: -1 * newCells[selectCell.pos].cid
+                  }
+                  setTurnState({goPl1: turnState.goPl1, selectQuad: true, doRotate: false});
+                  setMessage(turnState.goPl1
+                      ? {text: 'Player 1, choose a quad', color: message.color}
+                      : {text: 'Player 2, choose a quad', color: message.color});
+              }
+              setCells(newCells);
+          }
+      }
+      else {
+          const currIdx = selectors
+              .reduce((targetIdx, s, idx) => targetIdx + (s.backgroundColor === '#e4741d' ? idx : 0), 0);
+          const newSelectors = selectors.slice();
+
+          if (turnState.selectQuad && !turnState.doRotate) {
               if (key.match(/^(ArrowUp|w)$/)) {
                   newSelectors[currIdx - (currIdx - 2 >= 0 ? 2 : 0)] = {backgroundColor: '#e4741d'};
                   setMessage({text: `Quad ${currIdx + 1 - (currIdx - 2 >= 0 ? 2 : 0)}?`, color: message.color});
@@ -255,7 +330,7 @@ function App() {
               }
               setSelectors(newSelectors);
           }
-          if (turnState.doRotate) {
+          if (turnState.doRotate && !turnState.selectQuad) {
               console.log(currIdx);
               if (key.match(/^(ArrowLeft|a)$/))
                   setMessage({text: 'Rotate!\nCounter Clockwise?', color: message.color});
