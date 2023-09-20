@@ -8,7 +8,7 @@ const rotateCtlButtonStyle = {
     width: 250,
     height: 80,
     borderWidth: 1,
-    textColor: '#fafafa',
+    color: '#fafafa',
     backgroundColor: '#082837',
     borderColor: '#81d4fa'
 };
