@@ -276,7 +276,7 @@ function App() {
                     scanWinState(newCells, {});
 
                     setSelectors(selectors
-                        .map((s, idx) => idx + 1 === callbackQuads[0].qid ? ({ ...s, backgroundColor: '#e4741d' }) : s));
+                        .map((s, idx) => idx + 1 === selectCell.qid ? ({ ...s, backgroundColor: '#e4741d' }) : s));
                     setMessage(turnState.goPl1
                         ? {text: 'Player 1, choose a quad', color: cellStyleVariants.firstPl.backgroundColor}
                         : {text: 'Player 2, choose a quad', color: cellStyleVariants.secondPl.backgroundColor});
