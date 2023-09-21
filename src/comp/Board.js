@@ -82,7 +82,8 @@ const Board = props => {
                                                backgroundColor: selectors[idx].backgroundColor,
                                                paddingBottom: 1, paddingRight: 0, paddingTop: 0.6,
                                                width: 290,
-                                               height: 260
+                                               height: 260,
+                                               borderRadius: '1.5em'
                                            }}>
                                     <Quad attrs={attrs}
                                           cells={quadCells}
