@@ -65,7 +65,6 @@ function App() {
 
     const rotateQuad = (quadCells, clockwise = true) => {
         const newCells = cells.slice();
-        console.log(`Rotating quad ${quadCells[0].qid} ${clockwise ? 'clockwise' : 'counter clockwise'}`);
 
         // array of coordinates associated with the quadCells such that the center element is the origin (0, 0)
         const coordinates = quadCells.map((cell, idx) => ({
@@ -117,6 +116,7 @@ function App() {
   const initializeQuads = () => cellsToQuadFormat(cells, attributes.quadAttrs.columns,
               attributes.boardAttrs.columns * attributes.quadAttrs.columns);
 
+
   const initializeSelectors = () => Array.from({ length: 4 }, () => ({ backgroundColor: '#00000000' }));
 
     const [message, setMessage] = useState({ // message displayed in MessageCenter
@@ -139,8 +139,8 @@ function App() {
             if (turnState.selectQuad) {
                 if (selectors[qid - 1].backgroundColor === '#00000000') {
                     const newSelectors = selectors.map((selector, idx) => idx === qid - 1
-                        ? {backgroundColor: '#e4741d'}
-                        : {backgroundColor: '#00000000'});
+                        ? { backgroundColor: '#e4741d' }
+                        : { backgroundColor: '#00000000' });
                     setMessage({text: `Quad ${qid}?`, color: message.color});
                     setSelectors(newSelectors);
                 }
@@ -220,7 +220,8 @@ function App() {
             const newCells = cells.slice();
             const selectCell = callbackQuads.flat()
                 .find(cell => cell.cid < 0
-                    && cell.style === (turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl));
+                    && [cellStyleVariants.firstPl, cellStyleVariants.secondPl, cellStyleVariants.invalid]
+                        .includes(cell.style));
 
             const isLeftmostCol = (idx) => idx % arrayDims.y === 0;
 
@@ -235,51 +236,125 @@ function App() {
                 setCells(newCells);
             }
             else {
-                if (key.match(/^(ArrowUp|w)$/)
-                    && newCells[selectCell.pos - (selectCell.pos - arrayDims.x >= 0 ? arrayDims.x : 0)].style === cellStyleVariants.empty) {
-                    newCells[selectCell.pos - (selectCell.pos - arrayDims.x >= 0 ? arrayDims.x : 0)] = {
-                        ...newCells[selectCell.pos - (selectCell.pos - arrayDims.x >= 0 ? arrayDims.x : 0)],
-                        style: turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl
-                    };
-                    if (selectCell.pos - arrayDims.x >= 0)
+                if (key.match(/^(ArrowUp|w)$/)) {
+                    const next = selectCell.pos - (selectCell.pos - arrayDims.x >= 0 ? arrayDims.x : 0);
+                    if (newCells[next].style === cellStyleVariants.empty) {
+                        if (newCells[next].style.styleMemory)
+                            delete newCells[next].style.styleMemory;
+                        newCells[next] = {
+                            ...newCells[next],
+                            style: turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl
+                        };
+                    }
+                    else if (selectCell.pos - arrayDims.x >= 0) { // write to arrival cell with the invalid square to pass through, but not play on it.
+                        newCells[next] = {
+                            ...newCells[next],
+                            style: cellStyleVariants.invalid,
+                            styleMemory: newCells[next].style,
+                            cid: -1 * newCells[next].cid
+                        };
+                    }
+                    if (selectCell.pos - arrayDims.x >= 0) // manage the state of the departing square
                         newCells[selectCell.pos] = selectCell.pos - arrayDims.x >= 0
-                            ? { ...newCells[selectCell.pos], style: cellStyleVariants.empty }
+                            ? { ...newCells[selectCell.pos],
+                                style: newCells[selectCell.pos].style === cellStyleVariants.invalid
+                                    ? newCells[selectCell.pos].styleMemory
+                                    : cellStyleVariants.empty,
+                                cid: newCells[selectCell.pos].style === cellStyleVariants.invalid
+                                    ? -1 * newCells[selectCell.pos].cid
+                                    : newCells[selectCell.pos].cid }
                             : newCells[selectCell.pos];
                 }
-                if (key.match(/^(ArrowDown|s)$/)
-                    && newCells[selectCell.pos + (selectCell.pos + arrayDims.x < cells.length ? arrayDims.x : 0)].style === cellStyleVariants.empty) {
-                    newCells[selectCell.pos + (selectCell.pos + arrayDims.x < cells.length ? arrayDims.x : 0)] = {
-                        ...newCells[selectCell.pos + (selectCell.pos + arrayDims.x < cells.length ? arrayDims.x : 0)],
-                        style: turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl
-                    };
-                    if (selectCell.pos + arrayDims.x < cells.length)
+                if (key.match(/^(ArrowDown|s)$/)) {
+                    const next = selectCell.pos + (selectCell.pos + arrayDims.x < cells.length ? arrayDims.x : 0);
+                    if (newCells[next].style === cellStyleVariants.empty) {
+                        if (newCells[next].style.styleMemory)
+                            delete newCells[next].style.styleMemory;
+                        newCells[next] = {
+                            ...newCells[next],
+                            style: turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl
+                        };
+                    }
+                    else if (selectCell.pos + arrayDims.x < cells.length) { // write to arrival cell with the invalid square to pass through, but not play on it.
+                        newCells[next] = {
+                            ...newCells[next],
+                            style: cellStyleVariants.invalid,
+                            styleMemory: newCells[next].style,
+                            cid: -1 * newCells[next].cid
+                        };
+                    }
+                    if (selectCell.pos + arrayDims.x < cells.length) // manage the state of the departing square
                         newCells[selectCell.pos] = selectCell.pos + arrayDims.x < cells.length
-                            ? { ...newCells[selectCell.pos], style: cellStyleVariants.empty }
+                            ? { ...newCells[selectCell.pos],
+                                style: newCells[selectCell.pos].style === cellStyleVariants.invalid
+                                    ? newCells[selectCell.pos].styleMemory
+                                    : cellStyleVariants.empty,
+                                cid: newCells[selectCell.pos].style === cellStyleVariants.invalid
+                                    ? -1 * newCells[selectCell.pos].cid
+                                    : newCells[selectCell.pos].cid }
                             : newCells[selectCell.pos];
                 }
-                if (key.match(/^(ArrowLeft|a)$/)
-                    && newCells[selectCell.pos - (!isLeftmostCol(selectCell.pos) && selectCell.pos - 1 >= 0 ? 1 : 0)].style === cellStyleVariants.empty) {
-                    newCells[selectCell.pos - (!isLeftmostCol(selectCell.pos) && selectCell.pos - 1 >= 0 ? 1 : 0)] = {
-                        ...newCells[selectCell.pos - (!isLeftmostCol(selectCell.pos) && selectCell.pos - 1 >= 0 ? 1 : 0)],
-                        style: turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl
-                    };
-                    if (selectCell.pos - 1 >= 0)
-                        newCells[selectCell.pos] = !isLeftmostCol(selectCell.pos)
-                            ? { ...newCells[selectCell.pos], style: cellStyleVariants.empty }
+                if (key.match(/^(ArrowLeft|a)$/)) {
+                    const next = selectCell.pos - (!isLeftmostCol(selectCell.pos)
+                              && selectCell.pos - 1 >= 0 ? 1 : 0);
+                    if (newCells[next].style === cellStyleVariants.empty) {
+                        if (newCells[next].style.styleMemory)
+                            delete newCells[next].style.styleMemory;
+                        newCells[next] = {
+                            ...newCells[next],
+                            style: turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl
+                        };
+                    }
+                    else if (!isLeftmostCol(selectCell.pos) && selectCell.pos - 1 >= 0) { // write to arrival cell with the invalid square to pass through, but not play on it.
+                        newCells[next] = {
+                            ...newCells[next],
+                            style: cellStyleVariants.invalid,
+                            styleMemory: newCells[next].style,
+                            cid: -1 * newCells[next].cid
+                        };
+                    }
+                    if (!isLeftmostCol(selectCell.pos) && selectCell.pos - 1 >= 0) // manage the state of the departing square
+                        newCells[selectCell.pos] = !isLeftmostCol(selectCell.pos) && selectCell.pos - 1 >= 0
+                            ? { ...newCells[selectCell.pos],
+                                style: newCells[selectCell.pos].style === cellStyleVariants.invalid
+                                    ? newCells[selectCell.pos].styleMemory
+                                    : cellStyleVariants.empty,
+                                cid: newCells[selectCell.pos].style === cellStyleVariants.invalid
+                                    ? -1 * newCells[selectCell.pos].cid
+                                    : newCells[selectCell.pos].cid }
                             : newCells[selectCell.pos];
                 }
-                if (key.match(/^(ArrowRight|d)$/)
-                    && newCells[selectCell.pos + (!isLeftmostCol(selectCell.pos + 1) && selectCell.pos + 1 < cells.length ? 1 : 0)].style === cellStyleVariants.empty) {
-                    newCells[selectCell.pos + (!isLeftmostCol(selectCell.pos + 1) && selectCell.pos + 1 < cells.length ? 1 : 0)] = {
-                        ...newCells[selectCell.pos + (!isLeftmostCol(selectCell.pos + 1) && selectCell.pos + 1 < cells.length ? 1 : 0)],
-                        style: turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl
-                    };
-                    if (selectCell.pos + 1 < cells.length)
-                        newCells[selectCell.pos] = !isLeftmostCol(selectCell.pos + 1)
-                            ? { ...newCells[selectCell.pos], style: cellStyleVariants.empty }
+                if (key.match(/^(ArrowRight|d)$/)) {
+                    const next = selectCell.pos + (!isLeftmostCol(selectCell.pos + 1)
+                              && selectCell.pos + 1 < cells.length ? 1 : 0);
+                    if (newCells[next].style === cellStyleVariants.empty) {
+                        if (newCells[next].style.styleMemory)
+                            delete newCells[next].style.styleMemory;
+                        newCells[next] = {
+                            ...newCells[next],
+                            style: turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl
+                        };
+                    }
+                    else if (!isLeftmostCol(selectCell.pos + 1) && selectCell.pos + 1 < cells.length) { // write to arrival cell with the invalid square to pass through, but not play on it.
+                        newCells[next] = {
+                            ...newCells[next],
+                            style: cellStyleVariants.invalid,
+                            styleMemory: newCells[next].style,
+                            cid: -1 * newCells[next].cid
+                        };
+                    }
+                    if (!isLeftmostCol(selectCell.pos + 1) && selectCell.pos + 1 < cells.length) // manage the state of the departing square
+                        newCells[selectCell.pos] = !isLeftmostCol(selectCell.pos + 1) && selectCell.pos + 1 < cells.length
+                            ? { ...newCells[selectCell.pos],
+                                style: newCells[selectCell.pos].style === cellStyleVariants.invalid
+                                    ? newCells[selectCell.pos].styleMemory
+                                    : cellStyleVariants.empty,
+                                cid: newCells[selectCell.pos].style === cellStyleVariants.invalid
+                                    ? -1 * newCells[selectCell.pos].cid
+                                    : newCells[selectCell.pos].cid }
                             : newCells[selectCell.pos];
                 }
-                if (key.match(/^(Enter)$/)) {
+                if (key.match(/^(Enter)$/) && newCells[selectCell.pos].style !== cellStyleVariants.invalid) {
                     newCells[selectCell.pos] = {
                         ...newCells[selectCell.pos],
                         style: turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl,
@@ -310,50 +385,50 @@ function App() {
 
             if (turnState.selectQuad && !turnState.doRotate) {
                 if (key.match(/^(ArrowUp|w)$/)) {
-                    newSelectors[currIdx - (currIdx - 2 >= 0 ? 2 : 0)] = {backgroundColor: '#e4741d'};
-                    setMessage({text: `Quad ${currIdx + 1 - (currIdx - 2 >= 0 ? 2 : 0)}?`, color: message.color});
+                    newSelectors[currIdx - (currIdx - 2 >= 0 ? 2 : 0)] = { backgroundColor: '#e4741d' };
+                    setMessage({ text: `Quad ${currIdx + 1 - (currIdx - 2 >= 0 ? 2 : 0) }?`, color: message.color});
                     if (currIdx - 2 >= 0)
-                        newSelectors[currIdx] = {backgroundColor: '#00000000'};
+                        newSelectors[currIdx] = { backgroundColor: '#00000000' };
                 }
                 if (key.match(/^(ArrowDown|s)$/)) {
                     newSelectors[currIdx + (currIdx + 2 < selectors.length ? 2 : 0)] = {backgroundColor: '#e4741d'};
                     setMessage({
-                        text: `Quad ${currIdx + 1 + (currIdx + 2 < selectors.length ? 2 : 0)}?`,
+                        text: `Quad ${ currIdx + 1 + (currIdx + 2 < selectors.length ? 2 : 0) }?`,
                         color: message.color
                     });
                     if (currIdx + 2 < selectors.length)
                         newSelectors[currIdx] = {backgroundColor: '#00000000'};
                 }
                 if (key.match(/^(ArrowLeft|a)$/)) {
-                    newSelectors[currIdx - (currIdx !== 2 && currIdx - 1 >= 0 ? 1 : 0)] = {backgroundColor: '#e4741d'};
+                    newSelectors[currIdx - (currIdx !== 2 && currIdx - 1 >= 0 ? 1 : 0)] = { backgroundColor: '#e4741d' };
                     setMessage({
-                        text: `Quad ${currIdx + 1 - (currIdx !== 2 && currIdx - 1 >= 0 ? 1 : 0)}?`,
+                        text: `Quad ${ currIdx + 1 - (currIdx !== 2 && currIdx - 1 >= 0 ? 1 : 0) }?`,
                         color: message.color
                     });
                     if (currIdx !== 2 && currIdx - 1 >= 0)
                         newSelectors[currIdx] = {backgroundColor: '#00000000'};
                 }
                 if (key.match(/^(ArrowRight|d)$/)) {
-                    newSelectors[currIdx + (currIdx !== 1 && currIdx + 1 < selectors.length ? 1 : 0)] = {backgroundColor: '#e4741d'};
+                    newSelectors[currIdx + (currIdx !== 1 && currIdx + 1 < selectors.length ? 1 : 0)] = { backgroundColor: '#e4741d' };
                     setMessage({
-                        text: `Quad ${currIdx + 1 + (currIdx !== 1 && currIdx + 1 < selectors.length ? 1 : 0)}?`,
+                        text: `Quad ${ currIdx + 1 + (currIdx !== 1 && currIdx + 1 < selectors.length ? 1 : 0) }?`,
                         color: message.color
                     });
                     if (currIdx !== 1 && currIdx + 1 < selectors.length)
                         newSelectors[currIdx] = {backgroundColor: '#00000000'};
                 }
                 if (key.match(/^(Enter)$/)) {
-                    setTurnState({goPl1: turnState.goPl1, selectQuad: false, doRotate: true});
-                    setMessage({text: 'Rotate! Choose a direction', color: message.color});
+                    setTurnState({ goPl1: turnState.goPl1, selectQuad: false, doRotate: true });
+                    setMessage({ text: 'Rotate! Choose a direction', color: message.color });
                 }
                 setSelectors(newSelectors);
             }
             if (turnState.doRotate && !turnState.selectQuad) {
                 console.log(currIdx);
                 if (key.match(/^(ArrowLeft|a)$/))
-                    setMessage({text: 'Rotate!\nCounter Clockwise?', color: message.color});
+                    setMessage({ text: 'Rotate!\nCounter Clockwise?', color: message.color });
                 if (key.match(/^(ArrowRight|d)$/))
-                    setMessage({text: 'Rotate!\nClockwise?', color: message.color});
+                    setMessage({ text: 'Rotate!\nClockwise?', color: message.color });
                 if (key.match(/^(Enter)$/)) {
                     const newCells = rotateQuad(callbackQuads[currIdx], !message.text.match(/(Counter Clockwise\?)$/));
                     newSelectors[currIdx].backgroundColor = '#00000000';
