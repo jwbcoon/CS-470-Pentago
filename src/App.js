@@ -50,9 +50,8 @@ function App() {
                 .filter(cell => bigSeqPositions.includes(cell.pos));
 
             newCells.forEach(cell => {
-                const hlCellIdx = highlightCells.indexOf(cell);
-                if (hlCellIdx >= 0)
-                    newCells[highlightCells[hlCellIdx].pos].style = cellStyleVariants.win;
+                if (highlightCells.includes(cell))
+                    newCells[cell.pos].style = cellStyleVariants.win;
             })
 
             return { newMessage: turnState.goPl1
@@ -165,8 +164,12 @@ function App() {
                     : { goPl1: !turnState.goPl1, selectQuad: false, doRotate: false };
                 setMessage(newMessage);
                 setTurnState(newTurnState);
+                setSelectors(selectors
+                    .map((selector, idx) =>
+                        stateData.newTurnState
+                            ? ({ ...selector, backgroundColor: cellStyleVariants.win.backgroundColor })
+                            : selector));
 
-                setSelectors(newSelectors);
                 setQuads(cellsToQuadFormat(newCells, attributes.quadAttrs.columns, quads[qid - 1].length));
                 setCells(newCells);
             }
@@ -197,7 +200,15 @@ function App() {
             setMessage(newMessage);
             setTurnState(newTurnState);
             setSelectors(selectors
-                .map((s, idx) => idx + 1 === qid ? ({ ...s, backgroundColor: '#e4741d' }) : s));
+                .map((selector, idx) =>
+                    (stateData.newTurnState ? qid : idx + 1) === qid
+                        ? ({
+                            ...selector,
+                            backgroundColor: stateData.newTurnState
+                                ? cellStyleVariants.win.backgroundColor
+                                : '#e4741d'
+                        })
+                        : selector));
 
             setQuads(cellsToQuadFormat(newCells, attributes.quadAttrs.columns, quads[qid - 1].length));
             setCells(newCells);
@@ -238,14 +249,11 @@ function App() {
             else {
                 if (key.match(/^(ArrowUp|w)$/)) {
                     const next = selectCell.pos - (selectCell.pos - arrayDims.x >= 0 ? arrayDims.x : 0);
-                    if (newCells[next].style === cellStyleVariants.empty) {
-                        if (newCells[next].style.styleMemory)
-                            delete newCells[next].style.styleMemory;
+                    if (newCells[next].style === cellStyleVariants.empty)
                         newCells[next] = {
                             ...newCells[next],
                             style: turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl
                         };
-                    }
                     else if (selectCell.pos - arrayDims.x >= 0) { // write to arrival cell with the invalid square to pass through, but not play on it.
                         newCells[next] = {
                             ...newCells[next],
@@ -255,26 +263,24 @@ function App() {
                         };
                     }
                     if (selectCell.pos - arrayDims.x >= 0) // manage the state of the departing square
-                        newCells[selectCell.pos] = selectCell.pos - arrayDims.x >= 0
-                            ? { ...newCells[selectCell.pos],
-                                style: newCells[selectCell.pos].style === cellStyleVariants.invalid
-                                    ? newCells[selectCell.pos].styleMemory
-                                    : cellStyleVariants.empty,
-                                cid: newCells[selectCell.pos].style === cellStyleVariants.invalid
-                                    ? -1 * newCells[selectCell.pos].cid
-                                    : newCells[selectCell.pos].cid }
-                            : newCells[selectCell.pos];
+                        if (newCells[next].style.styleMemory)
+                            delete newCells[next].style.styleMemory;
+                        if (newCells[selectCell.pos].style === cellStyleVariants.invalid)
+                            newCells[selectCell.pos] = selectCell.pos - arrayDims.x >= 0
+                                ? { ...newCells[selectCell.pos], style: newCells[selectCell.pos].styleMemory, cid: -1 * newCells[selectCell.pos].cid }
+                                : newCells[selectCell.pos];
+                        else
+                            newCells[selectCell.pos] = selectCell.pos - arrayDims.x >= 0
+                                ? { ...newCells[selectCell.pos], style: cellStyleVariants.empty, cid: newCells[selectCell.pos].cid }
+                                : newCells[selectCell.pos];
                 }
                 if (key.match(/^(ArrowDown|s)$/)) {
                     const next = selectCell.pos + (selectCell.pos + arrayDims.x < cells.length ? arrayDims.x : 0);
-                    if (newCells[next].style === cellStyleVariants.empty) {
-                        if (newCells[next].style.styleMemory)
-                            delete newCells[next].style.styleMemory;
+                    if (newCells[next].style === cellStyleVariants.empty)
                         newCells[next] = {
                             ...newCells[next],
                             style: turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl
                         };
-                    }
                     else if (selectCell.pos + arrayDims.x < cells.length) { // write to arrival cell with the invalid square to pass through, but not play on it.
                         newCells[next] = {
                             ...newCells[next],
@@ -284,27 +290,25 @@ function App() {
                         };
                     }
                     if (selectCell.pos + arrayDims.x < cells.length) // manage the state of the departing square
+                        if (newCells[next].style.styleMemory)
+                            delete newCells[next].style.styleMemory;
+                    if (newCells[selectCell.pos].style === cellStyleVariants.invalid)
                         newCells[selectCell.pos] = selectCell.pos + arrayDims.x < cells.length
-                            ? { ...newCells[selectCell.pos],
-                                style: newCells[selectCell.pos].style === cellStyleVariants.invalid
-                                    ? newCells[selectCell.pos].styleMemory
-                                    : cellStyleVariants.empty,
-                                cid: newCells[selectCell.pos].style === cellStyleVariants.invalid
-                                    ? -1 * newCells[selectCell.pos].cid
-                                    : newCells[selectCell.pos].cid }
+                            ? { ...newCells[selectCell.pos], style: newCells[selectCell.pos].styleMemory, cid: -1 * newCells[selectCell.pos].cid }
+                            : newCells[selectCell.pos];
+                    else
+                        newCells[selectCell.pos] = selectCell.pos + arrayDims.x < cells.length
+                            ? { ...newCells[selectCell.pos], style: cellStyleVariants.empty, cid: newCells[selectCell.pos].cid }
                             : newCells[selectCell.pos];
                 }
                 if (key.match(/^(ArrowLeft|a)$/)) {
                     const next = selectCell.pos - (!isLeftmostCol(selectCell.pos)
                               && selectCell.pos - 1 >= 0 ? 1 : 0);
-                    if (newCells[next].style === cellStyleVariants.empty) {
-                        if (newCells[next].style.styleMemory)
-                            delete newCells[next].style.styleMemory;
+                    if (newCells[next].style === cellStyleVariants.empty)
                         newCells[next] = {
                             ...newCells[next],
                             style: turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl
                         };
-                    }
                     else if (!isLeftmostCol(selectCell.pos) && selectCell.pos - 1 >= 0) { // write to arrival cell with the invalid square to pass through, but not play on it.
                         newCells[next] = {
                             ...newCells[next],
@@ -314,27 +318,25 @@ function App() {
                         };
                     }
                     if (!isLeftmostCol(selectCell.pos) && selectCell.pos - 1 >= 0) // manage the state of the departing square
-                        newCells[selectCell.pos] = !isLeftmostCol(selectCell.pos) && selectCell.pos - 1 >= 0
-                            ? { ...newCells[selectCell.pos],
-                                style: newCells[selectCell.pos].style === cellStyleVariants.invalid
-                                    ? newCells[selectCell.pos].styleMemory
-                                    : cellStyleVariants.empty,
-                                cid: newCells[selectCell.pos].style === cellStyleVariants.invalid
-                                    ? -1 * newCells[selectCell.pos].cid
-                                    : newCells[selectCell.pos].cid }
-                            : newCells[selectCell.pos];
+                        if (newCells[next].style.styleMemory)
+                            delete newCells[next].style.styleMemory;
+                        if (newCells[selectCell.pos].style === cellStyleVariants.invalid)
+                            newCells[selectCell.pos] = !isLeftmostCol(selectCell.pos) && selectCell.pos - 1 >= 0
+                                ? { ...newCells[selectCell.pos], style: newCells[selectCell.pos].styleMemory, cid: -1 * newCells[selectCell.pos].cid }
+                                : newCells[selectCell.pos];
+                        else
+                            newCells[selectCell.pos] = !isLeftmostCol(selectCell.pos) && selectCell.pos - 1 >= 0
+                                ? { ...newCells[selectCell.pos], style: cellStyleVariants.empty, cid: newCells[selectCell.pos].cid }
+                                : newCells[selectCell.pos];
                 }
                 if (key.match(/^(ArrowRight|d)$/)) {
                     const next = selectCell.pos + (!isLeftmostCol(selectCell.pos + 1)
                               && selectCell.pos + 1 < cells.length ? 1 : 0);
-                    if (newCells[next].style === cellStyleVariants.empty) {
-                        if (newCells[next].style.styleMemory)
-                            delete newCells[next].style.styleMemory;
+                    if (newCells[next].style === cellStyleVariants.empty)
                         newCells[next] = {
                             ...newCells[next],
                             style: turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl
                         };
-                    }
                     else if (!isLeftmostCol(selectCell.pos + 1) && selectCell.pos + 1 < cells.length) { // write to arrival cell with the invalid square to pass through, but not play on it.
                         newCells[next] = {
                             ...newCells[next],
@@ -344,15 +346,16 @@ function App() {
                         };
                     }
                     if (!isLeftmostCol(selectCell.pos + 1) && selectCell.pos + 1 < cells.length) // manage the state of the departing square
-                        newCells[selectCell.pos] = !isLeftmostCol(selectCell.pos + 1) && selectCell.pos + 1 < cells.length
-                            ? { ...newCells[selectCell.pos],
-                                style: newCells[selectCell.pos].style === cellStyleVariants.invalid
-                                    ? newCells[selectCell.pos].styleMemory
-                                    : cellStyleVariants.empty,
-                                cid: newCells[selectCell.pos].style === cellStyleVariants.invalid
-                                    ? -1 * newCells[selectCell.pos].cid
-                                    : newCells[selectCell.pos].cid }
-                            : newCells[selectCell.pos];
+                        if (newCells[next].style.styleMemory)
+                            delete newCells[next].style.styleMemory;
+                        if (newCells[selectCell.pos].style === cellStyleVariants.invalid)
+                            newCells[selectCell.pos] = !isLeftmostCol(selectCell.pos + 1) && selectCell.pos + 1 < cells.length
+                                ? { ...newCells[selectCell.pos], style: newCells[selectCell.pos].styleMemory, cid: -1 * newCells[selectCell.pos].cid }
+                                : newCells[selectCell.pos];
+                        else
+                            newCells[selectCell.pos] = !isLeftmostCol(selectCell.pos + 1) && selectCell.pos + 1 < cells.length
+                                ? { ...newCells[selectCell.pos], style: cellStyleVariants.empty, cid: newCells[selectCell.pos].cid }
+                                : newCells[selectCell.pos];
                 }
                 if (key.match(/^(Enter)$/) && newCells[selectCell.pos].style !== cellStyleVariants.invalid) {
                     newCells[selectCell.pos] = {
@@ -373,7 +376,15 @@ function App() {
                     setMessage(newMessage);
                     setTurnState(newTurnState);
                     setSelectors(selectors
-                        .map((s, idx) => idx + 1 === selectCell.qid ? ({ ...s, backgroundColor: '#e4741d' }) : s));
+                        .map((selector, idx) =>
+                            (stateData.newTurnState ? selectCell.qid : idx + 1) === selectCell.qid
+                                ? ({
+                                    ...selector,
+                                    backgroundColor: stateData.newTurnState
+                                        ? cellStyleVariants.win.backgroundColor
+                                        : '#e4741d'
+                                })
+                                : selector));
                 }
                 setCells(newCells);
             }
@@ -444,8 +455,12 @@ function App() {
                         : { goPl1: !turnState.goPl1, selectQuad: false, doRotate: false };
                     setMessage(newMessage);
                     setTurnState(newTurnState);
+                    setSelectors(selectors
+                        .map((selector, idx) =>
+                            stateData.newTurnState
+                                ? ({ ...selector, backgroundColor: cellStyleVariants.win.backgroundColor })
+                                : selector));
 
-                    setSelectors(newSelectors);
                     setQuads(cellsToQuadFormat(newCells, attributes.quadAttrs.columns, callbackQuads[currIdx].length));
                     setCells(newCells);
                 }
@@ -459,6 +474,7 @@ function App() {
 
     return (
         <Container
+            maxWidth={false}
             sx={{
                 width: '100vw',
                 height: '100vh',

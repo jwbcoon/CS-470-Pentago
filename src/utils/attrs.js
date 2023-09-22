@@ -23,33 +23,44 @@ const rotateCtlAttrs = {
 
 const cellStyleVariants = {
     empty: {
+        borderWidth: 1,
+        borderStyle: 'solid',
         backgroundColor: '#757575',
             color: '#fafafa',
             borderColor: '#757575',
             borderRadius: '2em'
     },
     firstPl: {
+        borderWidth: 1,
+        borderStyle: 'solid',
         backgroundColor: '#81d4fa',
             color: '#fafafa',
             borderColor: '#81d4fa',
             borderRadius: '2em'
     },
     secondPl: {
+        borderWidth: 1,
+        borderStyle: 'solid',
         backgroundColor: '#ffcc80',
             color: '#fafafa',
             borderColor: '#ffcc80',
             borderRadius: '2em'
     },
     win: {
+        borderWidth: 1,
+        borderStyle: 'solid',
         backgroundColor: '#3bc270',
             color: '#fafafa',
             borderColor: '#3bc270',
             borderRadius: '2em'
     },
     invalid: {
+        borderWidth: 1,
+        borderStyle: 'solid',
         backgroundColor: '#F60707B5',
             color: '#fafafa',
             borderColor: '#F60707B5',
+            borderRadius: '2em',
             styleMemory: '#F60707B5'
     }
 }
