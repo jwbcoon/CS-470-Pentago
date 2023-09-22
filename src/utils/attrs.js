@@ -10,7 +10,8 @@ const rotateCtlButtonStyle = {
     borderWidth: 1,
     color: '#fafafa',
     backgroundColor: '#082837',
-    borderColor: '#81d4fa'
+    borderColor: '#81d4fa',
+    borderRadius: '0.5em'
 };
 
 const rotateCtlAttrs = {
@@ -24,28 +25,32 @@ const cellStyleVariants = {
     empty: {
         backgroundColor: '#757575',
             color: '#fafafa',
-            borderColor: '#757575'
+            borderColor: '#757575',
+            borderRadius: '2em'
     },
     firstPl: {
         backgroundColor: '#81d4fa',
             color: '#fafafa',
-            borderColor: '#81d4fa'
+            borderColor: '#81d4fa',
+            borderRadius: '2em'
     },
     secondPl: {
         backgroundColor: '#ffcc80',
             color: '#fafafa',
-            borderColor: '#ffcc80'
+            borderColor: '#ffcc80',
+            borderRadius: '2em'
     },
     win: {
         backgroundColor: '#3bc270',
             color: '#fafafa',
-            borderColor: '#3bc270'
+            borderColor: '#3bc270',
+            borderRadius: '2em'
     },
     invalid: {
         backgroundColor: '#F60707B5',
             color: '#fafafa',
             borderColor: '#F60707B5',
-        styleMemory: '#F60707B5'
+            styleMemory: '#F60707B5'
     }
 }
 
@@ -64,7 +69,8 @@ const quadAttrs = {
     justifyContent: 'center',
     backgroundColor: '#784115',
     color: '#6d1016',
-    borderColor: '#784115'
+    borderColor: '#784115',
+    borderRadius: '1em'
 };
 
 const boardAttrs =  {
@@ -73,7 +79,7 @@ const boardAttrs =  {
     height: 550,
     direction: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'center'
 };
 
 const attributes = {
