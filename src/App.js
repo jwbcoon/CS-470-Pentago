@@ -110,14 +110,14 @@ function App() {
           if (idx.toString().match(/^((18)|(19)|(20)|(24)|(25)|(26)|(30)|(31)|(32))$/)) return 3; //southwest quad
           if (idx.toString().match(/^((21)|(22)|(23)|(27)|(28)|(29)|(33)|(34)|(35))$/)) return 4; //southeast quad
       }
-      return new Array(arrayDims.x * arrayDims.y).fill({ ...cellAttrs })
-          .map((cell, idx) => ({ ...cellAttrs, cid: -1 * (idx + 1), qid: determineQuad(idx), pos: idx }));
+      return Array.from({ length: arrayDims.x * arrayDims.y },
+          (cell, idx) => ({ ...cellAttrs, cid: -1 * (idx + 1), qid: determineQuad(idx), pos: idx }));
   };
 
   const initializeQuads = () => cellsToQuadFormat(cells, attributes.quadAttrs.columns,
               attributes.boardAttrs.columns * attributes.quadAttrs.columns);
 
-  const initializeSelectors = () => new Array(4).fill({ backgroundColor: '#00000000' });
+  const initializeSelectors = () => Array.from({ length: 4 }, () => ({ backgroundColor: '#00000000' }));
 
     const [message, setMessage] = useState({ // message displayed in MessageCenter
         text: 'Welcome to Pentago! It is Player 1\'s turn',
@@ -156,14 +156,12 @@ function App() {
 
                 const stateData = scanWinState(newCells, turnState.doRotate);
 
-                const newMessage = stateData.newMessage
-                    ? stateData.newMessage
+                const newMessage = stateData.newMessage ? stateData.newMessage
                     : (turnState.goPl1
                         ? { text: 'Player 2\'s turn!', color: cellStyleVariants.secondPl.backgroundColor }
                         : { text: 'Player 1\'s turn!', color: cellStyleVariants.firstPl.backgroundColor }
                     );
-                const newTurnState = stateData.newTurnState
-                    ? stateData.newTurnState
+                const newTurnState = stateData.newTurnState ? stateData.newTurnState
                     : { goPl1: !turnState.goPl1, selectQuad: false, doRotate: false };
                 setMessage(newMessage);
                 setTurnState(newTurnState);
@@ -189,14 +187,12 @@ function App() {
 
             const stateData = scanWinState(newCells, {});
 
-            const newMessage = stateData.newMessage
-                ? stateData.newMessage
+            const newMessage = stateData.newMessage ? stateData.newMessage
                 : (turnState.goPl1
                         ? { text: 'Player 1, choose a quad', color: cellStyleVariants.firstPl.backgroundColor }
                         : { text: 'Player 2, choose a quad', color: cellStyleVariants.secondPl.backgroundColor }
                 );
-            const newTurnState = stateData.newTurnState
-                ? stateData.newTurnState
+            const newTurnState = stateData.newTurnState ? stateData.newTurnState
                 : { goPl1: turnState.goPl1, selectQuad: true, doRotate: false };
             setMessage(newMessage);
             setTurnState(newTurnState);
@@ -292,14 +288,12 @@ function App() {
 
                     const stateData = scanWinState(newCells, {});
 
-                    const newMessage = stateData.newMessage
-                        ? stateData.newMessage
+                    const newMessage = stateData.newMessage ? stateData.newMessage
                         : (turnState.goPl1
                                 ? { text: 'Player 1, choose a quad', color: cellStyleVariants.firstPl.backgroundColor }
                                 : { text: 'Player 2, choose a quad', color: cellStyleVariants.secondPl.backgroundColor }
                         );
-                    const newTurnState = stateData.newTurnState
-                        ? stateData.newTurnState
+                    const newTurnState = stateData.newTurnState ? stateData.newTurnState
                         : { goPl1: turnState.goPl1, selectQuad: true, doRotate: false };
                     setMessage(newMessage);
                     setTurnState(newTurnState);
@@ -366,14 +360,12 @@ function App() {
 
                     const stateData = scanWinState(newCells, turnState.doRotate);
 
-                    const newMessage = stateData.newMessage
-                        ? stateData.newMessage
+                    const newMessage = stateData.newMessage ? stateData.newMessage
                         : (turnState.goPl1
                                 ? { text: 'Player 2\'s turn!', color: cellStyleVariants.secondPl.backgroundColor }
                                 : { text: 'Player 1\'s turn!', color: cellStyleVariants.firstPl.backgroundColor }
                         );
-                    const newTurnState = stateData.newTurnState
-                        ? stateData.newTurnState
+                    const newTurnState = stateData.newTurnState ? stateData.newTurnState
                         : { goPl1: !turnState.goPl1, selectQuad: false, doRotate: false };
                     setMessage(newMessage);
                     setTurnState(newTurnState);
@@ -393,8 +385,8 @@ function App() {
     return (
         <Container
             sx={{
-                width: 4320,
-                height: 910,
+                width: '100vw',
+                height: '100vh',
                 backgroundColor: '#10456d'
             }}
         >
