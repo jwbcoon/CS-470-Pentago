@@ -105,10 +105,10 @@ function App() {
 
   const initializeCells = () => {
       const determineQuad = idx => {
-          if (idx.toString().match(/^((0)|(1)|(2)|(6)|(7)|(8)|(12)|(13)|(14))$/)) return 1;
-          if (idx.toString().match(/^((3)|(4)|(5)|(9)|(10)|(11)|(15)|(16)|(17))$/)) return 2;
-          if (idx.toString().match(/^((18)|(19)|(20)|(24)|(25)|(26)|(30)|(31)|(32))$/)) return 3;
-          if (idx.toString().match(/^((21)|(22)|(23)|(27)|(28)|(29)|(33)|(34)|(35))$/)) return 4;
+          if (idx.toString().match(/^((0)|(1)|(2)|(6)|(7)|(8)|(12)|(13)|(14))$/)) return 1; //northwest quad
+          if (idx.toString().match(/^((3)|(4)|(5)|(9)|(10)|(11)|(15)|(16)|(17))$/)) return 2; //northeast quad
+          if (idx.toString().match(/^((18)|(19)|(20)|(24)|(25)|(26)|(30)|(31)|(32))$/)) return 3; //southwest quad
+          if (idx.toString().match(/^((21)|(22)|(23)|(27)|(28)|(29)|(33)|(34)|(35))$/)) return 4; //southeast quad
       }
       return new Array(arrayDims.x * arrayDims.y).fill({ ...cellAttrs })
           .map((cell, idx) => ({ ...cellAttrs, cid: -1 * (idx + 1), qid: determineQuad(idx), pos: idx }));
