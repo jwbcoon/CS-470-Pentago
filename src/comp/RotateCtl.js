@@ -1,6 +1,6 @@
 import {Box, Grid} from "@mui/material";
 
-const RotateCtl = props => {
+const RotateCtl = props => { //Component for button controls to rotate the pentago quads
     const {attrs, onClickHandler} = props;
     const [leftBox, rightBox] = ['counter-clockwise', 'clockwise'];
     return (

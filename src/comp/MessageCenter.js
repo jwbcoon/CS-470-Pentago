@@ -1,6 +1,6 @@
 import {Container, Typography} from "@mui/material";
 
-const MessageCenter = props => {
+const MessageCenter = props => { //component for containing text which updates with notifications for the player
     const {message} = props;
     return (
         <Container

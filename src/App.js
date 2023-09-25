@@ -110,7 +110,9 @@ function App() {
       }
       return Array.from({ length: arrayDims.x * arrayDims.y },
           (cell, idx) => ({ ...cellAttrs, cid: -1 * (idx + 1), qid: determineQuad(idx), pos: idx }));
-  };
+  }; //cid uniquely identifies cells, is negative when they are unplaced and positive when they are placed.
+     //qid is the quadrant ("quad") a cell resides in, counted in 1-based indexing, and the pos is the index of
+     //a cell with reference to the 6x6 grid cells.
 
   const initializeQuads = () => cellsToQuadFormat(cells, attributes.quadAttrs.columns,
               attributes.boardAttrs.columns * attributes.quadAttrs.columns);
@@ -227,15 +229,16 @@ function App() {
     const onKeyDownHandler = (event, callbackQuads) => {
         const key = event.key;
 
+        //If block for managing selecting squares with a keyboard
         if (!turnState.doRotate && !turnState.selectQuad) {
             const newCells = cells.slice();
             const selectCell = callbackQuads.flat()
-                .find(cell => cell.cid < 0
-                    && [cellStyleVariants.firstPl, cellStyleVariants.secondPl, cellStyleVariants.invalid]
-                        .includes(cell.style));
+                .find(cell => cell.cid < 0 // negative cid defines the select cell
+                    && cell.style !== cellStyleVariants.empty); // cell style is not empty defines the select cell
 
             const isLeftmostCol = (idx) => idx % arrayDims.y === 0;
 
+            //Add a random cell if a keyboard input is occuring, but no select cell is present
             if (!selectCell) {
                 let start = Math.floor(Math.random() * arrayDims.x * arrayDims.y);
                 while (newCells[start].style !== cellStyleVariants.empty)
@@ -246,30 +249,30 @@ function App() {
                 };
                 setCells(newCells);
             }
-            else {
+            else { //Move the select cell in the direction the keyboard inputs it.
                 if (key.match(/^(ArrowUp|w)$/)) {
                     const next = selectCell.pos - (selectCell.pos - arrayDims.x >= 0 ? arrayDims.x : 0);
-                    if (newCells[next].style === cellStyleVariants.empty)
+                    if (newCells[next].style === cellStyleVariants.empty) // write to arriving cell if it is empty
                         newCells[next] = {
                             ...newCells[next],
                             style: turnState.goPl1 ? cellStyleVariants.firstPl : cellStyleVariants.secondPl
                         };
-                    else if (selectCell.pos - arrayDims.x >= 0) { // write to arrival cell with the invalid square to pass through, but not play on it.
+                    else if (selectCell.pos - arrayDims.x >= 0) { // write to arriving cell with the invalid square
                         newCells[next] = {
                             ...newCells[next],
                             style: cellStyleVariants.invalid,
-                            styleMemory: newCells[next].style,
-                            cid: -1 * newCells[next].cid
+                            styleMemory: newCells[next].style, // record the cell style for when this cell is vacated
+                            cid: -1 * newCells[next].cid // make this cell have a negative cid, so it is selectable
                         };
                     }
                     if (selectCell.pos - arrayDims.x >= 0) // manage the state of the departing square
-                        if (newCells[next].style.styleMemory)
+                        if (newCells[next].style.styleMemory) // remove the styleMemory property of next cell
                             delete newCells[next].style.styleMemory;
-                        if (newCells[selectCell.pos].style === cellStyleVariants.invalid)
+                        if (newCells[selectCell.pos].style === cellStyleVariants.invalid) // set the departing cell to its previous state
                             newCells[selectCell.pos] = selectCell.pos - arrayDims.x >= 0
                                 ? { ...newCells[selectCell.pos], style: newCells[selectCell.pos].styleMemory, cid: -1 * newCells[selectCell.pos].cid }
                                 : newCells[selectCell.pos];
-                        else
+                        else // set the departing cell back to empty
                             newCells[selectCell.pos] = selectCell.pos - arrayDims.x >= 0
                                 ? { ...newCells[selectCell.pos], style: cellStyleVariants.empty, cid: newCells[selectCell.pos].cid }
                                 : newCells[selectCell.pos];
@@ -357,6 +360,7 @@ function App() {
                                 ? { ...newCells[selectCell.pos], style: cellStyleVariants.empty, cid: newCells[selectCell.pos].cid }
                                 : newCells[selectCell.pos];
                 }
+                // manage the player placing the select cell
                 if (key.match(/^(Enter)$/) && newCells[selectCell.pos].style !== cellStyleVariants.invalid) {
                     newCells[selectCell.pos] = {
                         ...newCells[selectCell.pos],
@@ -389,8 +393,8 @@ function App() {
                 setCells(newCells);
             }
         }
-        else {
-            const currIdx = selectors
+        else { // select one of four quads to rotate, the player selecting a square, and the player choosing a direction
+            const currIdx = selectors //currIdx is the only highlighted square or the first square
                 .reduce((targetIdx, s, idx) => targetIdx + (s.backgroundColor === '#e4741d' ? idx : 0), 0);
             const newSelectors = selectors.slice();
 

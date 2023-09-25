@@ -2,7 +2,7 @@ import {Box, Container, Grid} from "@mui/material";
 import {forwardRef, Fragment} from "react";
 
 
-const KeyboardInput = forwardRef((props, ref) => {
+const KeyboardInput = forwardRef((props, ref) => { //component which captures keyboard input
 
     const {callbackQuads, onKeyDownHandler, onBlurHandler} = props;
 
@@ -21,7 +21,7 @@ const KeyboardInput = forwardRef((props, ref) => {
     );
 });
 
-const Quad = props => {
+const Quad = props => { //Grid container of 3x3 cells that reports position and qid of cells clicked inside it
     const {attrs, cells, onClickQuadHandler, onClickCellHandler} = props;
     // noinspection JSValidateTypes
     return (
@@ -51,7 +51,7 @@ const Quad = props => {
 }
 
 
-const Board = props => {
+const Board = props => { //parent component that contains the total board and reports keyboard input to App.js
     const {attrs, quads, selectors, handlers, inputRef} = props;
 
     // noinspection JSValidateTypes
@@ -75,7 +75,7 @@ const Board = props => {
 
                                   }}
                             >
-                                <Container sx={{
+                                <Container sx={{ //highlight/selector element of the UI
                                                justifyContent: 'center',
                                                alignItems: 'center',
                                                margin: 'auto',
