@@ -1,10 +1,11 @@
 import {Box, Container, Grid} from "@mui/material";
 import {forwardRef, Fragment} from "react";
+import {clickQuad, clickCell, keyDown, blur} from "../actions";
 
 
 const KeyboardInput = forwardRef((props, ref) => { //component which captures keyboard input
 
-    const {callbackQuads, onKeyDownHandler, onBlurHandler} = props;
+    const {callbackQuads, dispatch} = props;
 
     return (
         <input
@@ -14,20 +15,20 @@ const KeyboardInput = forwardRef((props, ref) => { //component which captures ke
                 top: '-9999px',
                 left: '-9999px',
             }}
-            onKeyDown={event => onKeyDownHandler(event, callbackQuads)}
-            onBlur={event => onBlurHandler(event)}
+            onKeyDown={event => dispatch(keyDown(event, callbackQuads))}
+            onBlur={event => dispatch(blur(event))}
             ref={ref}
         />
     );
 });
 
 const Quad = props => { //Grid container of 3x3 cells that reports position and qid of cells clicked inside it
-    const {attrs, cells, onClickQuadHandler, onClickCellHandler} = props;
+    const {attrs, cells, dispatch} = props;
     // noinspection JSValidateTypes
     return (
         <Fragment>
             <Grid container
-                  onClick={() => onClickQuadHandler(cells, cells[0].qid)}
+                  onClick={() => dispatch(clickQuad(cells, cells[0].qid))}
                   sx={{ ...attrs.quadAttrs }}
             >
                 {
@@ -40,7 +41,7 @@ const Quad = props => { //Grid container of 3x3 cells that reports position and 
                               }}
                         >
                             <Box sx={{ ...cell, ...cell.style }}
-                                 onClick={() => onClickCellHandler(cell.pos, cell.qid)}>
+                                 onClick={() => dispatch(clickCell(cell.pos, cell.qid))}>
                             </Box>
                         </Grid>
                     )
@@ -52,14 +53,13 @@ const Quad = props => { //Grid container of 3x3 cells that reports position and 
 
 
 const Board = props => { //parent component that contains the total board and reports keyboard input to App.js
-    const {attrs, quads, selectors, handlers, inputRef} = props;
+    const {attrs, quads, selectors, dispatch, inputRef} = props;
 
     // noinspection JSValidateTypes
     return (
         <Container>
             <KeyboardInput callbackQuads={quads}
-                           onKeyDownHandler={handlers.onKeyDownHandler}
-                           onBlurHandler={handlers.onBlurHandler}
+                           dispatch={dispatch}
                            ref={inputRef}/>
             <Grid container
                   columns={attrs.boardAttrs.columns}
@@ -87,8 +87,7 @@ const Board = props => { //parent component that contains the total board and re
                                            }}>
                                     <Quad attrs={attrs}
                                           cells={quadCells}
-                                          onClickQuadHandler={handlers.onClickQuadHandler}
-                                          onClickCellHandler={handlers.onClickCellHandler}/>
+                                          dispatch={dispatch}/>
                                 </Container>
                             </Grid>
                         )
